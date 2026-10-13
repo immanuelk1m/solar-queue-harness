@@ -4,7 +4,7 @@
 | run | 내용 | MSE | llh | lhh | hlh | hhh | F1 |
 |---|---|---|---|---|---|---|---|
 | E0472 | SOTA. per-lead mixture XGB + residual analog + DONKI WSA-Enlil 5특징(ACE origin 시각) | 3281.3 | 5037 | 4598 | 3863 | 4174 | 0.283 |
-| E1022/E0855 | E0472를 ACE obs+2h로 다시 만든 replay(신규 run의 실질 출발선) | 3421.8 | 5322 | 4747 | 4100 | 4313 | 0.268 |
+| E1022/E0855 | E0472를 ACE obs+2h로 다시 만든 replay. **현재 작업 챔피언**(점진 체인과 3% 게이트의 기준) | 3421.8 | 5322 | 4747 | 4100 | 4313 | 0.268 |
 | E0471 | E0147 레시피 + ENLIL | 3487.8 | 6101 | 4524 | 4146 | 4408 | 0.334 |
 
 - 고속 셀 4개(*_*_high)가 오차가 가장 큰 곳이다. 저속 셀은 1100–2800 수준이다.
@@ -32,14 +32,22 @@
 - tree pruning / subset selection / Rashomon / post-prune: crbts72(MILP infeasible), rcp72, cspr72 계열.
 - 신경망 backbone 교체: TabPFN E0545 3488.8, xLSTM 5106, NBEATSx 5984, Transformer/Crossformer 계열 모두 E0472보다 나쁨.
 - 같은 source의 다른 요약: DONKI CME 분석 특징 E0475(+0.7%), DBM 도착 E0476(+1.5%, E0408 기준), NOAA Enlil 특징 E0241(+0.03%).
+- ENLIL 특징 확장 6개 arm(E0518-F, 공식 창 3272–3307): 모두 E0472와 같거나 나쁨. 학습 보정도 표본 밖에서 기존 예측을 못 이김.
+- 기존 입력으로 shock 도착 시각을 직접 학습(E0555, 89개 충격파): MAE 13.2h로 Enlil 12.5h보다 나쁨.
+- SURF hydro / HUXt 단독 전파 예보(q77 E0665): recurrence보다 MSE가 크게 나쁨(31262·32857 vs 11515). 특징으로 결합하는 실험은 아직 없다.
 - 위 축의 threshold·게이트만 바꾼 재시도.
 
-## 아직 제대로 시도되지 않은 축 (출발점 후보)
-- 코로나그래프 CME 운동학(속도·폭·방향) + 개선된 drag-based 도착 모델. E0476은 단순 DBM 하나만 시도했다.
-- GONG 자기장 지도 기반 PFSS/WSA 배경풍 + HUXt 전파. GONG 금지는 10-11에 해제됐고, HUXt는 아직 설치하지 않았다.
-- ENLIL 예보의 시간 정렬 오차를 학습해 보정하는 도착 시각 보정(ENLIL은 유일하게 작동한 timing source다).
-- 72h 평균 level(오라클 −50%) 자체를 별도 대상으로 예측하고 그 예측을 per-lead 모델에 조건으로 주는 구조.
-- 공식 창까지 도달하는 다른 실시간 source(STEREO-A는 Earth보다 70° 앞서 있어 CIR 선행 정보가 없다. 이건 이미 확인됐다).
+### 닫힘 판정 규칙
+- 축은 리더보드 전체 구간 3-seed lb-eval이나 사건 수가 충분한 직접 정보 검정(예: E0555)으로만 닫힌다.
+- smoke·CAL/SEARCH/W 창·7일 블록·단일 seed, 실행 실패(rc≠0), 폐지된 스크린 게이트·사전조건 종료, 2026-10-06 이전의 옛 3구간 평가(dev/selection/audit, rocv)는 축을 닫지 않는다. 예: E0093은 rc=1 실패, E0136은 옛 3구간 평가다. 그런 축은 다시 제안할 수 있다(LBRE/RERUN 재평가 대기 중이면 중복).
+
+## 아직 리더보드로 검증되지 않은 축 (출발점 후보 — 큐에 이미 있으면 중복)
+- 2026-10-13에 큐에 들어간 피봇: q193 HSS/CIR 도착·형상, q194 ENLIL 원시 전파장, q195 Carrington 공간장, q196 stream-interface 표적, q197 IPS 관측. 이 메커니즘은 결과가 나올 때까지 중복으로 본다.
+- 코로나그래프 CME 운동학(속도·폭·방향)을 per-lead 모델의 **특징**으로 넣는 것. E0476은 단순 DBM 도착 시각 하나만 특징으로 썼다.
+- GONG 자기장 지도 기반 PFSS/WSA 배경풍을 per-lead 모델의 **특징**으로 넣는 것. 단독 전파 예보(q77)는 나빴지만, 특징 결합은 검증된 적이 없다.
+- 72h 평균 level(오라클 −50%)을 별도 대상으로 예측하고 per-lead 모델에 조건으로 주는 구조.
+- E0472 계열 레시피 안의 단일 변경 중 공식 창에서 아직 안 돌린 것: LBRE 재평가 결과가 나오면 스택 후보로 쓴다.
+- 참고: STEREO-A는 Earth보다 70° 앞서 있어 CIR 선행 정보가 없다(확인됨).
 
 ## 출처
 리더보드 lb-eval 기록(`research/expos/graph.jsonl`), 캠페인 `research/e0472-ablation-hpo/campaign/trials-and-ablations.csv`, headroom audit(`leaderboard/store/headroom-audit/report.md`), 시트 `태양풍 연구`.
