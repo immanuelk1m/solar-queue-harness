@@ -1,0 +1,4 @@
+interface:
+  display_name: "Solar Queue Harness"
+  short_description: "Choose and manage the next solar-wind research action"
+  default_prompt: "Use $solar-queue-harness to inspect the live solar-wind research sheet and determine the single highest-value next research action."
