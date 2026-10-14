@@ -80,3 +80,58 @@ probe 응답·샘플만 있다. 학습 데이터로 쓰지 않는다: SW-015 `~/
 
 - SW-055 GFZ Kp/ap/F10.7, OMNI2, Kyoto Dst: 지자기·태양 지수. 미수집.
 - SW-056 nrt-collect 중단 소스: STEREO COR2/EUVI/PLASTIC/IMPACT, CCOR-2, e-CALLISTO, Solar Orbiter LL, LASCO C2/C3 RT, SOLAR-1, UCSD tomography. 사용자 중단. 2026-10-14 사용자 결정: 연구 데이터와 겹치거나 범위 밖이라 수집 중단·삭제
+
+<!-- DATA-V2-TABLE:START -->
+## v2 최신화 상태
+
+위 표는 v1 재현 이력이다. 아래 상태는 SolarWind DB의 S:W 열과 함께 갱신한다. `ready` 전환 조건은 서버의 `data-v2/reports/defaults.json`이며, 수집·해시 검사와 실험 사용 검증은 별개다. 실제 관측 끝이 미검증이거나 일부 생성/전송이 남은 항목을 최신화 완료로 취급하지 않는다.
+
+| ID | 데이터셋 | v2 경로 | 관측 최신 | 검증 상태 |
+|---|---|---|---|---|
+| SW-001 | ACE 실시간 hourly (수집기 원본) |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
+| SW-002 | ACE hourly stage (sun-db) |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
+| SW-003 | ACE frozen snapshot | /home/t-lab01/sunrun/leaderboard/store/v2/ace-snapshot |  | 미완료 / manifest 없음 |
+| SW-004 | ACE 결측 보간 속도 (학습 타깃·입력) | /home/t-lab01/sunrun/leaderboard/store/v2/ch |  | 미완료 / manifest 없음 |
+| SW-005 | Coronal hole (CH) hourly | /home/t-lab01/sunrun/leaderboard/store/v2/ch |  | 미완료 / manifest 없음 |
+| SW-006 | SUVI Fe195 경도 strip | /home/t-lab01/sunrun/leaderboard/store/v2/suvi-fusion |  | 미완료 / manifest 없음 |
+| SW-007 | SUVI hourly 메타데이터 | /home/t-lab01/sunrun/leaderboard/store/v2/suvi-meta |  | 미완료 / manifest 없음 |
+| SW-008 | GOES-18 SUVI L1b Fe195 원본 |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
+| SW-009 | DONKI WSA-Enlil 아카이브 | /home/t-lab01/sunrun/leaderboard/store/v2/donki | 관측 끝 미검증 | donki: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
+| SW-010 | DONKI WSA-Enlil live | /home/t-lab01/sunrun/leaderboard/store/v2/donki | 관측 끝 미검증 | donki: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
+| SW-011 | GONG polar-cap 특징 | /home/t-lab01/sunrun/leaderboard/store/v2/gong-derived | 관측 끝 미검증 | gong-derived: partial |
+| SW-012 | GONG mrzqs FITS 원본 (부분) | /home/t-lab01/sunrun/leaderboard/store/v2/gong-mrzqs |  | 미완료 / manifest 없음 |
+| SW-013 | ACE K1 SWEPAM alpha/He | /home/t-lab01/sunrun/leaderboard/store/v2/ace-k1 | 관측 끝 미검증 | ace-k1: complete |
+| SW-014 | ACE Level 2 (검증본) | /home/t-lab01/sunrun/leaderboard/store/v2/ace-l2 | 관측 끝 미검증 | ace-l2: complete |
+| SW-015 | ACE daily list 공개 시각 | /home/t-lab01/sunrun/leaderboard/store/v2/ace-release | 관측 끝 미검증 | ace-release: complete_with_upstream_gaps |
+| SW-016 | ACE 파생 캐시 (alfven/aceturb/mambats/L72/tapfnx) | /home/t-lab01/sunrun/leaderboard/store/v2/aceturb<br>/home/t-lab01/sunrun/leaderboard/store/v2/alfven<br>/home/t-lab01/sunrun/leaderboard/store/v2/mambats-inputs<br>/home/t-lab01/sunrun/leaderboard/store/v2/mambats-source | 관측 끝 미검증<br>관측 끝 미검증<br>관측 끝 미검증<br>관측 끝 미검증 | aceturb: completed<br>alfven: completed<br>mambats-inputs: completed<br>mambats-source: running |
+| SW-017 | ACE SWEPAM strahl 272 eV |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
+| SW-018 | GONG-OCB72 PFSS 위상 | /home/t-lab01/sunrun/leaderboard/store/v2/gong-ocb<br>/home/t-lab01/sunrun/leaderboard/store/v2/gong-ocb-r2<br>/home/t-lab01/sunrun/leaderboard/store/v2/gong-ocb-r3<br>/home/t-lab01/sunrun/leaderboard/store/v2/gong-ocb-r4<br>/home/t-lab01/sunrun/leaderboard/store/v2/gong-ocb-r5<br>/home/t-lab01/sunrun/leaderboard/store/v2/gong-ocb-r6<br>/home/t-lab01/sunrun/leaderboard/store/v2/gong-ocb-r7 | 관측 끝 미검증 | gong-ocb: partial<br>미완료 / manifest 없음<br>미완료 / manifest 없음<br>미완료 / manifest 없음<br>미완료 / manifest 없음<br>미완료 / manifest 없음<br>미완료 / manifest 없음 |
+| SW-019 | PFSS connectivity | /home/t-lab01/sunrun/leaderboard/store/v2/pfssconn | 관측 끝 미검증 | pfssconn: partial |
+| SW-020 | PFSS-WSA 직접 | /home/t-lab01/sunrun/leaderboard/store/v2/pfss-wsa |  | 미완료 / manifest 없음 |
+| SW-021 | CME-HCS72 | /home/t-lab01/sunrun/leaderboard/store/v2/cme-hcs | 관측 끝 미검증 | cme-hcs: partial |
+| SW-022 | CH unipolarity / 자기장 집중도 | /home/t-lab01/sunrun/leaderboard/store/v2/chunip<br>/home/t-lab01/sunrun/leaderboard/store/v2/magconc |  | 미완료 / manifest 없음<br>미완료 / manifest 없음 |
+| SW-023 | CME-chip | /home/t-lab01/sunrun/leaderboard/store/v2/cmechip | 관측 끝 미검증 | cmechip: running |
+| SW-024 | NOAA SWPC WSA-Enlil ambient 아카이브 | /home/t-lab01/sunrun/leaderboard/store/v2/enlil-ambient |  | 미완료 / manifest 없음 |
+| SW-025 | DONKI CME·CMEAnalysis·IPS·HSS | /home/t-lab01/sunrun/leaderboard/store/v2/donki | 관측 끝 미검증 | donki: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
+| SW-026 | ENLIL revision 궤적 |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
+| SW-027 | CCMC CME Scoreboard | /home/t-lab01/sunrun/leaderboard/store/v2/ccmc-cme-scoreboard | 관측 끝 미검증 | ccmc-cme-scoreboard: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
+| SW-028 | SOHO LASCO C2 512px | /home/t-lab01/sunrun/leaderboard/store/v2/lasco-c2-512 | 관측 끝 미검증 | lasco-c2-512: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
+| SW-029 | CACTus LASCO CME 카탈로그 | /home/t-lab01/sunrun/leaderboard/store/v2/cactus | 관측 끝 미검증 | cactus: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
+| SW-030 | STEREO-A beacon HI1 |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
+| SW-031 | STEREO-A beacon HI2 |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
+| SW-032 | ISEE IPS (STEL) |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
+| SW-033 | PUNCH QAM J-map | /home/t-lab01/sunrun/leaderboard/store/v2/punch-qam |  | 미완료 / manifest 없음 |
+| SW-034 | SWPC Solar & Geophysical Event Reports (Type II/III/IV) | /home/t-lab01/sunrun/leaderboard/store/v2/swpc-events | 관측 끝 미검증 | swpc-events: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
+| SW-035 | GOES-18 XRS | /home/t-lab01/sunrun/leaderboard/store/v2/goes18-xrs | 2026-10-12T23:59:00.000000000 | goes18-xrs: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
+| SW-036 | GOES-18 MPS-HI SEP | /home/t-lab01/sunrun/leaderboard/store/v2/goes18-sep | 20261013 | goes18-sep: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
+| SW-037 | SDO/HMI SHARP NRT | /home/t-lab01/sunrun/leaderboard/store/v2/hmi-sharp-nrt | 관측 끝 미검증 | hmi-sharp-nrt: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
+| SW-038 | NMDB 중성자 모니터 | /home/t-lab01/sunrun/leaderboard/store/v2/nmdb | 2026-10-14 11:00:00+00:00 | nmdb: 생성됨; 관측 끝/실험 사용 별도 검증 |
+| SW-039 | SUVI Fe171 | /home/t-lab01/sunrun/leaderboard/store/v2/fe171 | 관측 끝 미검증 | fe171: 생성됨; 관측 끝/실험 사용 별도 검증 |
+| SW-040 | SUVI 파생 (EUV wave, dimming, CH 형태, CH mask) | /home/t-lab01/sunrun/leaderboard/store/v2/euvwave<br>/home/t-lab01/sunrun/leaderboard/store/v2/suvi-dim<br>/home/t-lab01/sunrun/leaderboard/store/v2/chmorph<br>/home/t-lab01/sunrun/leaderboard/store/v2/chmask | 관측 끝 미검증 | euvwave: 생성됨; 관측 끝/실험 사용 별도 검증<br>미완료 / manifest 없음<br>미완료 / manifest 없음<br>미완료 / manifest 없음 |
+| SW-041 | 영상 임베딩 (DINOv3, V-JEPA) | /home/t-lab01/sunrun/leaderboard/store/v2/dinov3<br>/home/t-lab01/sunrun/leaderboard/store/v2/vjepa-frozen<br>/home/t-lab01/sunrun/leaderboard/store/v2/vjepa-120h | 관측 끝 미검증<br>관측 끝 미검증 | dinov3: blocked_credentials<br>vjepa-frozen: running<br>미완료 / manifest 없음 |
+| SW-055 | GFZ Kp/ap/F10.7, OMNI2, Kyoto Dst |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
+| SW-057 | GONG 자기장 디코딩 캐시 | /home/t-lab01/sunrun/leaderboard/store/v2/gong-decoded | 관측 끝 미검증 | gong-decoded: partial |
+| SW-042 | SWPC Forecast Discussion | /home/t-lab01/sunrun/leaderboard/store/v2/swpc-discussion | 관측 끝 미검증 | swpc-discussion: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
+| SW-058 | GONG multi-feature | /home/t-lab01/sunrun/leaderboard/store/v2/gong-derived | 관측 끝 미검증 | gong-derived: partial |
+
+<!-- DATA-V2-TABLE:END -->

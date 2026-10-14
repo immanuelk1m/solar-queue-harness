@@ -30,6 +30,7 @@
 - poison check(미래·미성숙 라벨을 바꿔도 예측이 변하지 않음)를 통과해야 한다.
 
 ## 허용 데이터 source (2026-10-14)
+- **데이터는 SolarWind DB 시트(미러 `references/datasets.md`)에 있는 데이터셋(SW-xxx)만 쓴다(사용자 2026-10-15).** 워커는 외부 데이터를 내려받지 않는다. 새 원천 수집·기존 데이터셋 기간 연장·외부 모델 산출물 취득이 필요한 행은 내지 않는다. 행의 `[필요 데이터·자원]`에는 쓰는 데이터셋을 SW ID와 로컬 경로로만 적는다. 시트에 없는 데이터가 꼭 필요하다고 판단되면 행을 내지 말고 결과 요약에 '데이터 추가 제안'으로 따로 적는다.
 - **데이터셋 목록과 상태는 `references/datasets.md`를 본다.** 원본은 Google Sheet [SolarWind DB](https://docs.google.com/spreadsheets/d/1KWgNQPlajHWw7FLUMz3lr4rO2z7sxuxXGstD0-YjAw4/edit) 탭 `데이터셋 manifest`다. 행에서 데이터를 지정할 때 그 ID(SW-xxx)와 로컬 경로를 쓴다.
 - 기존 로컬 store: ACE 플라스마·IMF·EPAM, 27일 recurrence, coronal hole(CH) 특징, SUVI 경도 strip·Fe171 영상(proxy 규칙: S3 LastModified ≤ origin, obs_end ≤ origin−1h), DONKI WSA-Enlil(live API, `modelCompletionTime` ≤ origin).
 - GONG 자기장 지도와 그 파생물(PFSS/WSA/HUXt)은 2026-10-11부터 다시 허용된다. NOAA SWPC WSA-Enlil도 허용된다. 공식 창까지 도달하는 대체 공개 source(OMNI, CDAWeb, SWPC archive)도 쓸 수 있다. source·버전·다운로드 날짜·해시는 기록한다.
@@ -46,3 +47,7 @@
 - 특정 과거 레시피를 기본 champion으로 가정하지 않는다.
 - 과거 E0472 계열 경로는 historical reproduction 또는 해당 계열 INCREMENT가 필요할 때만 참고한다: `~/sunrun/leaderboard/experiments/e0472_ablation_hpo/{recipe,runner,configs,campaign}.py`(config json 하나가 변형 하나, 공식 unit 예시 `~/sunrun/research/lbre/units/*__official__official.json`), E0472 원본 `experiments/d148_enlil_live/lean_enlil.py`(ACE origin 시각 사용, 2h 규칙 이전).
 - 제출본 스크립트: GitHub `scripts/seongeun/<name>/<sha>.py`.
+
+## 데이터 v2 최신화 (2026-10-14)
+
+새 실험은 검증된 v2 입력을 사용한다. `~/sunrun/data-v2/reports/defaults.json`의 status=`ready`가 전환 조건이며, 그 전에는 이전 고정 입력을 유지한다. 입력은 실행 시작 시 스냅샷과 해시를 고정한다. 챔피언 계열은 `experiments.datav2` 어댑터를 사용하고, 다른 계열은 v2 registry와 dataset manifest를 따른다. 기존 등록 실험·재현용 v1과 보호 평가기는 변경하지 않는다. 수집 최신화는 인과적 사용 또는 과학적 채택을 뜻하지 않는다. 관측 끝·수집 시각·공개 시각·검증 상태를 구분하며 자세한 경로/상태는 `datasets.md`와 SolarWind DB 원본을 따른다.

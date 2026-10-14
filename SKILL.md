@@ -5,7 +5,7 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을
 
 # solar-queue-harness
 
-**버전: v6.1 (2026-10-14).** 실행 결과의 첫 줄에 `solar-queue-harness v6.1`를 출력한다. 원본은 https://github.com/immanuelk1m/solar-queue-harness (main)이다. 업로드된 사본과 내용이 다르면 GitHub 원본을 따른다.
+**버전: v6.2 (2026-10-14).** 실행 결과의 첫 줄에 `solar-queue-harness v6.2`를 출력한다. 원본은 https://github.com/immanuelk1m/solar-queue-harness (main)이다. 업로드된 사본과 내용이 다르면 GitHub 원본을 따른다.
 
 로컬 워커는 이 스킬이 `태양풍 큐`에 쓴 행 하나를 받는다. 그 행을 사양 그대로 구현해 리더보드 전체 구간에서 평가한다. 행의 `사양·지시` 칸이 곧 워커의 작업 지시다. 그래서 행 품질이 실험 품질을 결정한다.
 
