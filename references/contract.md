@@ -6,14 +6,22 @@
 - 판정은 `expos lb-eval`로만 한다. seed 0/1/2 세 개가 각각 `predictions_official_s{seed}.parquet`을 쓴다(모든 공식 origin×72h). 지표는 seed-mean total MSE (km/s)²이고, 고속 셀 4개(low_low_high, low_high_high, high_low_high, high_high_high)와 사건 F1을 함께 보고한다.
 - smoke와 7일 블록 판정은 없다(LB10). CAL/SEARCH/W0–W2 같은 내부 창은 디버깅 참고용일 뿐이다.
 
-## 기준과 목표
-- SOTA 고정 기준: **E0472 = 3281.307**(seed 3248.7/3300.4/3294.9). 고속 셀 5037/4598/3863/4174, F1 0.283.
-- 목표: seed-mean ≤ 0.9 × SOTA = **2953.18**. lb-eval 출력 `goal.total_mse_10pct_vs_sota`로 확인한다.
-- ACE+2h 인과 replay: E1022/E0855 = **3421.8**. 신규 run은 모두 이 규칙을 따르므로, 같은 레시피도 약 +140 불리하게 출발한다.
-- **작업 챔피언**: ACE obs+2h 규칙을 지킨 lb-eval 최고값이다. 잠정(3-seed)과 확정(REPLICATE 6-seed 짝 판정 통과)으로 나누고, 체인과 3% 게이트는 확정 챔피언 기준이다. 현재 확정 E1022 3421.806, 잠정 E1198 3366.5(재현 대기)다. 점진 체인의 기준이고, 3% 게이트(약 103 MSE)도 이 값 기준이다. 갱신 조건은 평균 −1.5% 이상이면서 모든 seed가 더 낮을 것이다(그 미만은 동률).
-- 노이즈: 약 90 MSE(seed 간 편차와 재현 편차). 3% ≈ 100 MSE가 의미 있는 최소 효과다.
-- **SOTA 갱신 조건 #13/#13b(고정 SOTA 대비, lb-eval이 자동 판정):** 3-seed 평균과 모든 seed가 현재 최고보다 낮을 것, 고속 셀 4개의 seed-mean이 악화되지 않을 것, F1 ≥ champion F1. 통과하면 독립 critic 1회를 거친다.
-- 자동 최고점(`lb-best`)에서 오라클 E0474/E0481은 제외된다.
+## 동적 기준 선택
+- 이 문서에는 특정 E id나 SOTA MSE를 현재 기준으로 고정하지 않는다.
+- 매 실행 시작 시 `태양풍 연구` 최신 전체를 읽어 현재 SOTA와 현재 인과·평가 계약의 작업 챔피언을 확정한다.
+- 현재 SOTA는 비교 가능한 공식 전체구간 lb-eval 결과 중 오라클·hindsight·계약 위반·무효 run을 제외한 유효 run을 대상으로 정한다.
+- 평가 계약이 다른 run은 같은 순위에 섞지 않는다. 필요한 경우 `공식 SOTA`와 `현재 계약 작업 챔피언`을 별도로 기록한다.
+- 작업 챔피언은 신규 실험이 따라야 하는 현재 계약 안에서 재현이 확인된 최선 run이다.
+- 과거 E0472/E1022 등의 값은 historical evidence로는 사용할 수 있지만 현재 기준값으로 자동 사용하지 않는다.
+- 후보 생성에는 고정 최소 예상 개선률을 두지 않는다.
+- 실제 실험 결과의 통계적 의미는 seed별 paired 결과와 REPLICATE 결과를 사용해 판단한다.
+- noise scale이 필요하면 최신 반복·재현 실험의 paired difference에서 동적으로 추정하고, 특정 MSE 값을 영구 상수로 두지 않는다.
+
+## SOTA 갱신
+- run 완료 시 그 시점의 `현재 SOTA`와 동일 평가 계약인지 먼저 확인한다.
+- 동일 계약이라면 seed-mean MSE, seed별 방향, 고속 셀, F1 및 사전 정의 guardrail로 비교한다.
+- 평가 계약이 다르면 `SOTA 갱신`이라고 부르지 않고 별도 comparator 결과로 기록한다.
+- SOTA 후보가 되더라도 독립 재현 절차를 거친다.
 
 ## 인과 규칙 (위반은 무효)
 - 학습은 target < 2026-05-29만 쓴다. 미래 정보, 공식 창 정답, 공식 창으로 고른 하이퍼파라미터를 쓰지 않는다.
@@ -32,6 +40,7 @@
 - 참고: E0472 계열 레시피의 공식 창 3-seed run은 `experiments/e0472_ablation_hpo` config + unit 방식으로 20–35분 걸린다.
 
 ## 코드 위치 (워커 로컬 경로)
-- 챔피언 계열 레시피: `~/sunrun/leaderboard/experiments/e0472_ablation_hpo/{recipe,runner,configs,campaign}.py`. config json 하나가 변형 하나다. 공식 unit 예시는 `~/sunrun/research/lbre/units/*__official__official.json`.
-- E0472 원본: `experiments/d148_enlil_live/lean_enlil.py`(ACE origin 시각 사용, 2h 규칙 이전).
+- 현재 작업 챔피언의 코드 경로는 `태양풍 연구`의 최신 결과 및 연결된 experiment/E id에서 매 실행 확인한다.
+- 특정 과거 레시피를 기본 champion으로 가정하지 않는다.
+- 과거 E0472 계열 경로는 historical reproduction 또는 해당 계열 INCREMENT가 필요할 때만 참고한다: `~/sunrun/leaderboard/experiments/e0472_ablation_hpo/{recipe,runner,configs,campaign}.py`(config json 하나가 변형 하나, 공식 unit 예시 `~/sunrun/research/lbre/units/*__official__official.json`), E0472 원본 `experiments/d148_enlil_live/lean_enlil.py`(ACE origin 시각 사용, 2h 규칙 이전).
 - 제출본 스크립트: GitHub `scripts/seongeun/<name>/<sha>.py`.
