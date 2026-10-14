@@ -35,9 +35,9 @@
 
 | ID | 데이터셋 | 기간 | 로컬 경로 | 인과 규칙 | 사용처·결과 | 비고 |
 |---|---|---|---|---|---|---|
-| SW-011 | GONG polar-cap 특징 | 2022-10-01 ~ 2026-09-30 | `~/sunrun/leaderboard/store/solar-inc-gongpolar72-20261014-cache/` | max(관측 + 2h, HTTP Last-Modified) | E1198 = E1022 + GONG polar (3366.5) | 6-seed 재현(E1224/E1225) 실패 |
+| SW-011 | GONG polar-cap 특징 | 2022-10-01 ~ 2026-09-30 | `~/sunrun/leaderboard/store/solar-inc-gongpolar72-20261014-cache/` | max(관측 + 2h, HTTP Last-Modified) | E1198 = E1022 + GONG polar (3366.5) | 6-seed 재현(E1224/E1225) 실패. STACK4(E1269, 실행 중)에 포함 |
 | SW-013 | ACE K1 SWEPAM alpha/He | 2022-09-01 ~ 2026-10-03 | `~/sunrun/leaderboard/store/alphahe72-cache/` | K1 244h 지연; MAG 관측 + 2h | alphahe72 (3394.3) | 부분 개선 |
-| SW-016 | ACE 파생 캐시 (alfven/aceturb/mambats/L72/tapfnx) | 2022-08 ~ 2026-09 | `~/sunrun/leaderboard/store/<이름>-cache` | 관측 + 2h | alfven 3417.2, aceturb72 3406.1, L72-COND 3383.2, MambaTS 5247, TAPFN 5991 | L72-COND만 개선(미채택), aceturb 재현 실패 |
+| SW-016 | ACE 파생 캐시 (alfven/aceturb/mambats/L72/tapfnx) | 2022-08 ~ 2026-09 | `~/sunrun/leaderboard/store/<이름>-cache` | 관측 + 2h | alfven 3417.2, aceturb72 3406.1, L72-COND 3383.2, MambaTS 5247, TAPFN 5991 | L72-COND 개선(미채택), aceturb 재현 실패. 둘 다 STACK4(E1269, 실행 중)에 포함 |
 | SW-017 | ACE SWEPAM strahl 272 eV | - ~ - | `~/sunrun/leaderboard/store/solar-inc-strahl72-20261014/` | 관측 + 2h | strahl72 3391.3 (재현 3424.4) |  |
 | SW-018 | GONG-OCB72 PFSS 위상 | 2022-10 ~ 2026-09 | `~/sunrun/leaderboard/store/solar-inc-gongocb72-20261014-cache (+r2~r7)` | max(관측 + 2h, Last-Modified) | 3405.3 | 판정: 해당 없음 |
 | SW-019 | PFSS connectivity | 2022-10 ~ 2026-09 | `~/sunrun/leaderboard/store/pfssconn-cache/` | SW-011과 같음 | 3742.5 |  |
@@ -46,7 +46,7 @@
 | SW-022 | CH unipolarity / 자기장 집중도 | - ~ - | `~/sunrun/leaderboard/store/solar-inc-chunip72-20261014-cache, solar-inc-chmagconc72-20261014-cache` | SW-011 + SUVI proxy | 3372.8 / 3385.7 |  |
 | SW-023 | CME-chip | - ~ - | `~/sunrun/leaderboard/store/cmechip72-cache/` | SW-011 + SUVI proxy | 3444.9 |  |
 | SW-024 | NOAA SWPC WSA-Enlil ambient 아카이브 | 2023-04-04 ~ 2026-09-22 | `~/sunrun/leaderboard/store/solar-inc-ambsw72-20261014/, ~/sunrun/leaderboard/store/enlil79-step1/` | init + 12h 또는 HTTP Last-Modified | ambsw72 3421.0 | 부분 개선 |
-| SW-025 | DONKI CME·CMEAnalysis·IPS·HSS | 2022-07 ~ 2026-10 | `~/sunrun/leaderboard/store/donki-cme/` | submissionTime ≤ origin, isMostAccurate 안 씀 | CME-PRECOND72 3405.5, cme-fd-huxt72 실행 중 | CME-PRECOND72 개선(미채택) |
+| SW-025 | DONKI CME·CMEAnalysis·IPS·HSS | 2022-07 ~ 2026-10 | `~/sunrun/leaderboard/store/donki-cme/` | submissionTime ≤ origin, isMostAccurate 안 씀 | CME-PRECOND72 3405.5, cme-fd-huxt72 실행 중 | CME-PRECOND72 개선(미채택), STACK4(E1269, 실행 중)에 포함 |
 | SW-026 | ENLIL revision 궤적 | - ~ - | `SW-009/010 파생` | modelCompletionTime | enlilrev72 E1277 |  |
 | SW-027 | CCMC CME Scoreboard | 2022-10-01 ~ 2026-10-14 | `~/sunrun/leaderboard/store/cmesb72/` | submissionTime ≤ origin | cmesb72 3527.5 | 결론 없음 |
 | SW-028 | SOHO LASCO C2 512px | 2022-09-30 ~ 2026-09-26 | `~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/` | realtime 증거 기록 | lascovision 3413.0, lascomassdrag E1270 |  |
@@ -61,6 +61,7 @@
 | SW-040 | SUVI 파생 (EUV wave, dimming, CH 형태, CH mask) | 2022-08 ~ 2026-10-13 | `~/sunrun/leaderboard/store/euvwave72, suvi-dim72-cache, chmorph72, chmask-cache` | SUVI proxy 규칙 | 3406.0 / 3421.6 / 3493.5 |  |
 | SW-041 | 영상 임베딩 (DINOv3, V-JEPA) | 2022-11-22 ~ 2026-05-28 | `~/sunrun/leaderboard/store/dinov3-cache, vjepa-frozen-fusion, vjepa-120h-fusion` | SUVI proxy 규칙 | E0055~58 실패 |  |
 | SW-042 | SWPC Forecast Discussion | 2024-03-01 ~ 2026-10-09 | `~/sunrun/leaderboard/store/swpc-discussion76/` | 발행 시각 | directive #76 | 시트 LB 행 없음 |
+| SW-058 | GONG multi-feature (gongmulti72) | - ~ - | `~/.local/state/research-dispatch/runs/solar/solar-inc-gongmulti72-20261014-*` | SW-011과 같음 | solar-inc-gongmulti72-20261014 |  |
 
 ## 부분 사본·유휴·평가 전용
 
@@ -69,10 +70,11 @@
 | SW-012 | GONG mrzqs FITS 원본 (부분) | 2026-06-01 ~ 2026-09-26 | `~/sunrun/leaderboard/store/scratch/pfssconn_20261014/gong_fits (+cmehcs72 85장)` | 관측 + 2h / Last-Modified | pfssconn, cmehcs, gongocb, chunip, cmechip | 2022-10~2026-05 bulk 3534장은 없어짐. GONG 금지는 2026-10-11 해제 |
 | SW-014 | ACE Level 2 (검증본) | 2000-08-01 ~ 2026-09-27 | `~/spaceweather-collector/data/cache-l2` | L2 지연으로 인과 사용 안 함 | - |  |
 | SW-043 | 공식 리더보드 스냅샷 | 2026-06-01 ~ 2026-09-30 | `~/.cache/huggingface (expos/evaluate.py 안에서만 읽음)` | 평가 전용 | lb-eval | 선택에 쓰면 안 됨. baseline-replay.parquet도 금지 |
+| SW-057 | GONG 자기장 디코딩 캐시 | 2022-10 ~ 2026-09 | `~/sunrun/leaderboard/store/solar-inc-chunip72-20261014-cache/source-cache/gong/` | SW-011과 같음 | chunip72 | 원본 FITS(2022-10~2026-05)가 삭제돼 남은 거의 유일한 GONG 사본(가공본). 파일별 날짜는 미확인 |
 
 ## 증거만 있는 폴더 (데이터셋 아님)
 
-probe 응답·샘플만 있다. 학습 데이터로 쓰지 않는다: SW-015 `~/spaceweather-collector/data/ace_release` (시간별 available_at 상한), SW-044 `~/sunrun/leaderboard/store/baron69-evidence/` (STEREO SWAVES beacon (#69 차단)), SW-045 `~/sunrun/leaderboard/store/beacon2science68-assets/` (Beacon2Science (#68)), SW-046 `~/sunrun/leaderboard/store/strudl62a-resume/` (STRUDL 코드 + HI beacon 일부 (#62a)), SW-047 `~/sunrun/leaderboard/store/turner70-evidence/` (BRaVDA/STEREO PLASTIC 샘플 (#70)), SW-048 `~/sunrun/leaderboard/store/l5l1-72-evidence/` (JPL Horizons 위치), SW-049 `~/sunrun/leaderboard/store/ips73-evidence/` (MWA·중국 IPS 목록 (#73/#74)), SW-050 `~/sunrun/leaderboard/store/coronagraph58-3-evidence/` (GOES-19 CCOR-1 샘플 (#58-3)), SW-051 `~/sunrun/leaderboard/store/solarorbiter58-4-evidence/` (Solar Orbiter LL 샘플 (#58-4)), SW-052 `~/sunrun/leaderboard/store/stoarc58_2a-evidence/` (e-CALLISTO burst list 색인 (#58-2a)), SW-053 `~/sunrun/leaderboard/store/surya67-metadata-20261011/` (SDO AIA/HMI 목록 (#67)), SW-054 `~/sunrun/leaderboard/store/punch66-metadata-20261011/` (PUNCH 메타데이터 (#66)).
+probe 응답·샘플만 있다. 학습 데이터로 쓰지 않는다: SW-015 `~/spaceweather-collector/data/ace_release` (시간별 available_at 상한), SW-044 `~/sunrun/leaderboard/store/baron69-evidence/` (STEREO SWAVES beacon (#69 차단)), SW-045 `~/sunrun/leaderboard/store/beacon2science68-assets/` (Beacon2Science (#68)), SW-046 `~/sunrun/leaderboard/store/strudl62a-resume/` (STRUDL 코드 + HI beacon 일부 (#62a)), SW-047 `~/sunrun/leaderboard/store/turner70-evidence/` (BRaVDA/STEREO PLASTIC 샘플 (#70)), SW-048 `~/sunrun/leaderboard/store/l5l1-72-evidence/` (JPL Horizons 위치), SW-049 `~/sunrun/leaderboard/store/ips73-evidence/` (MWA·중국 IPS 목록 (#73/#74)), SW-050 `~/sunrun/leaderboard/store/coronagraph58-3-evidence/` (GOES-19 CCOR-1 샘플 (#58-3)), SW-051 `~/sunrun/leaderboard/store/solarorbiter58-4-evidence/` (Solar Orbiter LL 샘플 (#58-4)), SW-052 `~/sunrun/leaderboard/store/stoarc58_2a-evidence/` (e-CALLISTO burst list 색인 (#58-2a)), SW-053 `~/sunrun/leaderboard/store/surya67-metadata-20261011/` (SDO AIA/HMI 목록 (#67)), SW-054 `~/sunrun/leaderboard/store/punch66-metadata-20261011/` (PUNCH 메타데이터 (#66)), SW-059 `~/sunrun/leaderboard/store/strudl62a-evidence/` (STRUDL 검사 기록 (#62a)), SW-060 `~/sunrun/leaderboard/store/q117-cosa-source/` (COSA 코드 (#117)), SW-061 `~/sunrun/leaderboard/store/surf77-source/` (SURF 저장소 코드 (#77)).
 
 ## 미수집·중단
 
