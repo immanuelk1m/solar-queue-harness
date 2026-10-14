@@ -3,14 +3,14 @@
 워커는 `사양·지시` 칸을 그대로 작업 지시로 읽는다. 아래 대괄호 필드명을 바꾸지 말고 순서대로 모두 채운다. 모르는 값은 "미확인(워커가 시트·코드에서 확인)"으로 적는다.
 
 ## 열
-- `ID`: `solar-<inc|comb|pivot>-<짧은영문이름>-YYYYMMDD`. 시트 두 탭에 같은 ID가 있으면 안 된다.
-- `항목`: `[INCREMENT|COMBINE|PIVOT] <방법 이름> — <한 줄 요약>`
+- `ID`: `solar-<inc|comb|pivot|rep>-<짧은영문이름>-YYYYMMDD`. REPLICATE는 `solar-rep-<대상 E id 소문자>-YYYYMMDD`. 시트 두 탭에 같은 ID가 있으면 안 된다.
+- `항목`: `[INCREMENT|COMBINE|PIVOT|REPLICATE] <방법 이름> — <한 줄 요약>`
 - `사양·지시`: 아래 본문(한국어, 3,000–8,000자 권장).
 - `갱신 시각`: 추가한 시각(KST).
 
 ## `사양·지시` 본문
 ```
-[모드] INCREMENT | COMBINE | PIVOT
+[모드] INCREMENT | COMBINE | PIVOT   (REPLICATE는 아래 별도 양식)
 
 [기준 레시피]
 - 작업 챔피언 <E id>(ACE+2h 준수 lb-eval seed-mean <값>, seed <값/값/값>, 고속 셀 llh/lhh/hlh/hhh <값들>). 현재 기본값은 E1022 3421.806(E0472 레시피의 ACE+2h replay, campaign baseline config)이다.
@@ -53,6 +53,36 @@
 
 [중복 검사]
 - 시트 `태양풍 연구`/`태양풍 큐`에서 가장 가까운 기존 행 2–3개의 ID와, 메커니즘이 어떻게 다른지.
+```
+
+## 결과 기록 줄 (모든 모드 공통 — 워커가 결과 칸 첫 줄에 쓴다)
+`LB| E=<id> base=<base id> seeds=<s0,s1,s2> mse=<a/b/c> mean=<m> d_base=<값,%> cells=<llh/lhh/hlh/hhh> type=<특징 블록 추가|후처리·잔차|하이퍼파라미터|예측 대상 변경|구조·학습 단위|새 정보원|replicate>`
+사양 끝에 "결과 칸 첫 줄에 위 `LB|` 줄을 쓴다"를 적는다.
+
+## REPLICATE 양식
+```
+[모드] REPLICATE
+
+[대상과 기준]
+- 대상 <E id>(원 seed 0/1/2 MSE, 평균, base 대비 %), 기준 <base E id>(원 seed MSE).
+- 재현 이유: 1.5단계 진단의 어떤 신호(H1/H2)와 수치 때문인지.
+
+[단일 변경]
+- 없음. 대상 레시피와 기준 레시피를 코드·특징·하이퍼파라미터 그대로 두고 seed 3, 4, 5로 두 run을 새로 돌린다. 원본 코드는 수정하지 않고 이 행 전용 디렉터리에 복사해 seed 목록만 바꾼다.
+- 레시피가 seed를 fold/block 인덱스로 쓰는지 먼저 확인한다. 그렇다면 무작위성만 바꾸는 동등한 seed 정의를 두 run에 똑같이 적용하고 기록한다.
+
+[실험]
+- 두 run 모두 리더보드 전체 구간 predictions_official_s3/s4/s5.parquet → 각각 expos lb-eval.
+- 6-seed 짝 판정: d_k = MSE(대상,k) − MSE(기준,k), k=0..5. 확정 = mean(d)<0 이고 t ≤ −2, 또는 6개 모두 음수. 그 밖은 기각. 새 seed 평균 d ≥ 0이면 "우연"으로 기록.
+- 고속 셀 4개·리드대역별 짝 차이도 보고.
+
+[결과 기록]
+- 첫 줄 `LB| ... type=replicate`, 둘째 줄 `REP| target=<대상> base=<기준> d=<d0..d5> mean_d=<값> t=<값> verdict=<확정|기각>`.
+
+[채택 시]
+- 확정이면 대상이 확정 챔피언(또는 확정 스택 후보)이 된다. 기각이면 "노이즈 가능"으로 표시한다.
+
+[인과 가용성] 원 실험과 동일. [필요 데이터·자원] 새 데이터 없음, CPU 3-seed run 2개. [중복 검사] 원 실험 행 ID.
 ```
 
 ## 쓰면 안 되는 문구
