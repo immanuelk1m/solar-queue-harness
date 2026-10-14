@@ -3,8 +3,8 @@
 워커는 `사양·지시` 칸을 그대로 작업 지시로 읽는다. 아래 대괄호 필드명을 바꾸지 말고 순서대로 모두 채운다. 모르는 값은 "미확인(워커가 시트·코드에서 확인)"으로 적는다.
 
 ## 열
-- `ID`: `solar-<inc|comb|pivot|rep>-<짧은영문이름>-YYYYMMDD`. REPLICATE는 `solar-rep-<대상 E id 소문자>-YYYYMMDD`. 시트 두 탭에 같은 ID가 있으면 안 된다.
-- `항목`: `[INCREMENT|COMBINE|PIVOT|REPLICATE] <방법 이름> — <한 줄 요약>`
+- `ID`: `solar-<inc|comb|pivot|rep>-<짧은영문이름>-YYYYMMDD`. REPLICATE는 `solar-rep-<대상 E id 소문자>-YYYYMMDD`. ARCH·ARCH-STEP은 `solar-arch-<계보>-s<N>-YYYYMMDD`(계보 이름은 짧은 영문 소문자, 계보 안에서 고정). 시트 두 탭에 같은 ID가 있으면 안 된다.
+- `항목`: `[INCREMENT|COMBINE|PIVOT|REPLICATE|ARCH|ARCH-STEP] <방법 이름> — <한 줄 요약>`
 - `사양·지시`: 아래 본문(한국어, 3,000–8,000자 권장).
 - `갱신 시각`: 추가한 시각(KST).
 
@@ -56,7 +56,8 @@
 ```
 
 ## 결과 기록 줄 (모든 모드 공통 — 워커가 결과 칸 첫 줄에 쓴다)
-`LB| E=<id> base=<base id> seeds=<s0,s1,s2> mse=<a/b/c> mean=<m> d_base=<값,%> cells=<llh/lhh/hlh/hhh> type=<특징 블록 추가|후처리·잔차|하이퍼파라미터|예측 대상 변경|구조·학습 단위|새 정보원|replicate>`
+`LB| E=<id> base=<base id> seeds=<s0,s1,s2> mse=<a/b/c> mean=<m> d_base=<값,%> cells=<llh/lhh/hlh/hhh> type=<특징 블록 추가|후처리·잔차|하이퍼파라미터|예측 대상 변경|구조·학습 단위|새 정보원|replicate|arch>`
+ARCH·ARCH-STEP 행은 같은 줄 끝에 `lineage=<계보> stage=<N> d_prev=<직전 단계 대비 값,%>`를 붙이고, `base`에는 비교 대상인 확정 챔피언 E id를 쓴다.
 사양 끝에 "결과 칸 첫 줄에 위 `LB|` 줄을 쓴다"를 적는다.
 
 ## REPLICATE 양식
@@ -83,6 +84,50 @@
 - 확정이면 대상이 확정 챔피언(또는 확정 스택 후보)이 된다. 기각이면 "노이즈 가능"으로 표시한다.
 
 [인과 가용성] 원 실험과 동일. [필요 데이터·자원] 새 데이터 없음, CPU 3-seed run 2개. [중복 검사] 원 실험 행 ID.
+```
+
+## ARCH / ARCH-STEP 양식 (아키텍처 전체 피봇, 계보 예산제)
+```
+[모드] ARCH (새 계보 s1) | ARCH-STEP (활성 계보의 다음 단계)
+
+[계보 ID] <계보 이름>   [단계] s<N> / 6
+
+[전체 구조]
+- 입력 표현 → 모델 → 출력(72h 속도 궤적 전체, 시간 단위)을 그림처럼 단계별로 쓴다. E0472 계열(per-lead XGBoost mixture + residual analog)과 무엇이 근본적으로 다른지 한 줄로 쓴다.
+- ARCH-STEP: 직전 단계(E id, 코드 디렉터리 `leaderboard/experiments/arch_<계보>/`)에서 바꾸는 것 하나만 코드 수준으로 쓴다.
+
+[입력·데이터 파이프라인]
+- 쓰는 source와 표현(원시 시계열, 영상, 자기장 지도, 사건 목록 등), 인과 정렬 방법. 기존 데이터 로더·인과 특징 빌더 재사용은 허용한다.
+- 금지: E0472 계열 모델의 예측·잔차·OOF를 입력이나 타깃으로 쓰는 것. E0472 계열과의 블렌딩·앙상블.
+
+[학습 설계]
+- 손실(궤적 MSE 등), 공식 창 이전 chronological 검증 분할(공식 창 정답으로 고르지 않음), seed 0/1/2, 옵티마이저·주요 하이퍼파라미터.
+- DL은 GPU, seed당 ≥ 30분 또는 early stop 수렴, epoch별 valid loss를 `curves_s{seed}.json`에 저장. 3-seed가 워커 12시간 안에 끝나는 규모.
+
+[귀납 편향 근거]
+- 이 구조가 확정 챔피언의 오차 질량(고속 셀 4개·shock 창의 도착 시각, 72h level)을 per-lead XGBoost보다 잘 잡는 이유.
+
+[가설·근거]
+- LITERATURE(구조 전체가 비슷한 과제에서 낸 실측 성능, 링크, 공개 코드·하이퍼파라미터) 또는 MATH(정의·가정·추정량).
+
+[계보 목표와 단계 계획]
+- 계보 목표: 확정 챔피언 대비 −3% 이상(단독). s1은 확정 챔피언보다 나빠도 된다.
+- s1~s6에서 각 단계가 바꿀 것 한 줄씩(예: s2 손실, s3 입력 표현 추가, s4 학습 단위 …). 다음 단계는 하네스가 결과를 보고 다시 정한다.
+
+[인과 가용성]
+- 모든 입력의 관측·발행 시각과 지연 규칙(ACE +2h 등), 학습 target < 2026-05-29, 라벨 성숙, poison check.
+
+[실험]
+- 리더보드 전체 구간 3-seed 단독 run → predictions_official_s{seed}.parquet → expos lb-eval. 비교: 확정 챔피언 lb-eval(현재 E1022 3421.806)과 계보 직전 단계.
+- 구현 고장은 끝까지 고쳐 완수한다.
+
+[계보 종료·승격 규칙]
+- 종료: 2단계 연속으로 계보 최고가 3% 이상 개선되지 않음, 또는 6단계 안에 확정 챔피언을 못 넘음.
+- 승격 대기: 확정 챔피언 대비 평균 −1.5% 이상 + 3 seed 모두 낮음 → REPLICATE.
+
+[결과 기록] 첫 줄 `LB| ... type=arch lineage=<계보> stage=<N> d_prev=<값,%>`.
+
+[중복 검사] 시트에서 같은 구조 계열을 쓴 이전 행(한 행짜리 독립 모델 포함)과, 그 시도와 무엇이 다른지(예산·학습 규모·구조).
 ```
 
 ## 쓰면 안 되는 문구

@@ -5,7 +5,7 @@ PIVOT은 챔피언 레시피의 정보 표현, 예측 대상, 문제 정의 자�
 ## 피봇으로 인정하지 않는 것 (기존 축의 변형)
 - chronology split·regularization, worst-era/minimax/REx 류
 - 기존 111개 특징의 단순 selection·pruning·weighting
-- XGBoost/NN backbone 교체, loss 함수 변경만 하는 것
+- XGBoost/NN backbone 교체, loss 함수 변경만 하는 것(PIVOT 범위 한정 — 아키텍처 전체를 바꾸는 것은 아래 ARCH로 낸다)
 - residual head, post-hoc correction, alpha/blending 변경, ensemble 가중·routing
 - 기존 analog/KNN의 K·거리·lookback 변경
 - 기존 특징 위에 attention/graph/gate만 추가하는 것
@@ -25,6 +25,15 @@ PIVOT은 챔피언 레시피의 정보 표현, 예측 대상, 문제 정의 자�
 2. **도착 시각(오라클 −21%)**: 속도 궤적을 직접 회귀하지 않는다. 사건 단위로 도착 시각 분포 p(t_arr | origin)와 도착 후 진폭을 예측하고, 그 분포의 기대값으로 속도 궤적을 합성한다(시간 정렬 오차를 MSE 최적으로 흡수).
 3. **학습 단위**: origin×lead 독립 회귀 대신, 고속 셀·shock 창에 속한 72h 궤적 전체를 한 표본으로 학습한다(궤적 손실, 형태 기저).
 각 행은 이 구조 변경 하나만 넣고, 입력 특징은 확정 챔피언 그대로 둔다. 기대이득은 해당 성분 오라클 headroom × 회수 비율로 계산한다.
+
+## 아키텍처 피봇 (ARCH 계보)
+E0472 계열(per-lead XGBoost mixture + residual analog) 자체를 버리고 처음부터 다른 구조로 예측한다. 한 행으로 판정하지 않고 계보(최대 6단계)로 키운다(`diagnostics.md` 계보 규칙, `row-template.md` ARCH 양식). 단독 판정만 하며 E0472 계열과 블렌딩하지 않는다.
+
+후보 계열 예시(각각 오늘의 병목과 연결해 쓴다):
+- **사건 단위 도착 시각 분포 + 궤적 합성**: 고속 셀·shock 창의 timing 오차(오라클 −21%)를 직접 겨냥. 사건 검출(CME·CIR) → p(t_arr) · 진폭 예측 → 72h 궤적의 기대값 합성.
+- **물리 전파 + 학습 hybrid**: GONG/PFSS·WSA 배경풍 → HUXt 또는 drag-based 전파 → L1 궤적, 그 위에 학습 보정. 72h level(오라클 −50%)과 HSS 도착을 구조적으로 표현. q77(단독 hydro/HUXt)이 나빴던 것은 학습 결합이 없었기 때문인지 계보 안에서 검증.
+- **원시 시퀀스·영상 시퀀스 모델**: ACE 원시 시계열 + SUVI/EUV 영상 시퀀스를 직접 입력으로 72h 궤적을 동시 출력(seq2seq). 요약 특징이 버린 시간 구조를 복원. 이전 신경망 시도(TabPFN·xLSTM·NBEATSx·Crossformer)는 짧은 학습·단발이었으므로 같은 계열이라도 계보 예산으로는 미검증이다.
+- **확률적 상태공간**: 배경풍 level·HSS 상태·CME 상태를 잠재 상태로 두고 관측(L1·원격)으로 필터링해 72h 예측 분포의 평균을 출력.
 
 ## PIVOT 행 작성 규칙
 - `[단일 변경]` 대신 "무엇을 버리고 무엇을 새로 보는지"를 쓴다. 단, 그 밖의 부분은 챔피언 레시피를 그대로 쓴다고 명시한다.

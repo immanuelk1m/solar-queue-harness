@@ -49,7 +49,7 @@
 - RLS expert bank: q99 E0695 4689.5(+43%).
 - chronology robustness / worst-era / minimax / REx / random-effects / MAML 류: q141, q150, q184, q186, q185, q155, q156, q157 등.
 - tree pruning / subset selection / Rashomon / post-prune: crbts72(MILP infeasible), rcp72, cspr72 계열.
-- 신경망 backbone 교체: TabPFN E0545 3488.8, xLSTM 5106, NBEATSx 5984, Transformer/Crossformer 계열 모두 E0472보다 나쁨.
+- 신경망 backbone 교체: TabPFN E0545 3488.8, xLSTM 5106, NBEATSx 5984, Transformer/Crossformer 계열 모두 E0472보다 나쁨. 단, 대부분 짧은 학습(다수 < 3분, directive #14 이전)과 한 행짜리 단발 시도였다. 닫힌 것은 "빠른 backbone 교체"이고, 계보 예산으로 키우는 아키텍처 전체 피봇(ARCH)은 아직 열려 있다.
 - 같은 source의 다른 요약: DONKI CME 분석 특징 E0475(+0.7%), DBM 도착 E0476(+1.5%, E0408 기준), NOAA Enlil 특징 E0241(+0.03%).
 - ENLIL 특징 확장 6개 arm(E0518-F, 공식 창 3272–3307): 모두 E0472와 같거나 나쁨. 학습 보정도 표본 밖에서 기존 예측을 못 이김.
 - 기존 입력으로 shock 도착 시각을 직접 학습(E0555, 89개 충격파): MAE 13.2h로 Enlil 12.5h보다 나쁨.
