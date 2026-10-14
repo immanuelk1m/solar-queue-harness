@@ -10,9 +10,10 @@ PIVOT은 챔피언 레시피의 정보 표현, 예측 대상, 문제 정의 자�
 - 기존 analog/KNN의 K·거리·lookback 변경
 - 기존 특징 위에 attention/graph/gate만 추가하는 것
 - 실패 실험의 threshold만 바꾼 재시도, 같은 정보를 다른 모델로 다시 학습하는 것
+- 챔피언 레시피의 휴리스틱 값(lag, strip 수, 리드 경계, 멤버·가중, analog K·lookback, origin grid)을 바꾸는 것. 이것은 피봇도 INCREMENT도 아니고 금지다(`heuristics.md`). 학습형으로 바꾸는 것만 허용한다.
 
 ## 피봇 층 (후보는 서로 다른 층에서 고른다)
-- **정보 표현**: summary 특징이 버린 공간·시간 구조를 되살린다(예: SUVI/EUV 영상의 CH 경계·면적 시계열, 자기장 지도).
+- **정보 표현**: summary 특징이 버린 공간·시간 구조를 되살린다. 임계값·strip·스칼라 요약 없이 학습형 인코더로 직접 넣는다(예: SUVI/EUV 영상 시퀀스·자기장 지도·ENLIL field를 CNN/ViT/state-space 인코더로 표현). 사람이 정한 CH 경계·면적·strip 요약은 `heuristics.md` 금지 대상이다.
 - **예측 대상**: 속도 대신 도착 시각, 지속 시간, 진폭, 이벤트 형태 같은 중간 물리량을 예측한다. 그 예측을 속도 궤적으로 바꾸는 단계까지 포함한다.
 - **문제 분해**: HSS/CIR, CME, quiet를 서로 다른 생성 메커니즘으로 보고 따로 모델링한다. 분류는 인과적 입력만으로 한다.
 - **물리 구조**: source → 전파 → 도착 → 속도 궤적을 명시적으로 모델링한다(PFSS/WSA/HUXt, drag-based).

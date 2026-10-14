@@ -13,7 +13,8 @@
 |---|---|
 | 이벤트 도착 시각(timing) | CME arrival time machine learning coronagraph kinematics 2025; drag-based model ensemble arrival correction; ENLIL arrival error correction machine learning |
 | 72h 평균 level | solar wind background speed WSA PFSS GONG machine learning 2025; HUXt ensemble solar wind forecast data assimilation |
-| HSS/CIR 상승 | coronal hole area speed relation forecast 2025; high speed stream onset prediction EUV |
+| HSS/CIR 상승 | end-to-end EUV image solar wind speed deep learning 2025; learned temporal attention solar wind high speed stream onset |
+| 손으로 정한 휴리스틱의 학습형 대체 | learnable lag selection time series attention; mixture of experts learned gating multi-horizon forecasting; learned metric retrieval-augmented time series forecasting |
 | 고속 셀의 진폭 과소추정 | extreme value regression time series underestimation peaks; conditional quantile forecast heavy tail |
 | 리드별 transfer 붕괴 | distribution shift multi-horizon forecasting solar cycle nonstationarity |
 
@@ -23,6 +24,7 @@
 - [ ] 챔피언 레시피 위에 단일 변경으로 옮길 수 있다(PIVOT·ARCH 제외).
 - [ ] (ARCH) 구조 전체를 재현할 수 있다: 공개 코드 또는 충분한 구조·하이퍼파라미터 기술, 비슷한 과제의 실측 성능, 우리 GPU·12시간 예산 안의 학습 비용.
 - [ ] 닫힌 축이나 대기 큐와 메커니즘이 다르다.
+- [ ] 우리 문제로 옮겼을 때 손으로 정한 lag·창·임계값·분할·스칼라 요약·경계·가중이 필요 없다(`heuristics.md`). 논문이 그런 값을 쓰면 그 부분을 학습형으로 바꿔 옮길 수 있어야 한다.
 - [ ] 워커 1개로 수 시간 안에 3-seed 전체 구간 run이 가능하다.
 - [ ] 기대이득을 내부 수치로 계산할 수 있고 그 값이 ≥ 3%다.
 

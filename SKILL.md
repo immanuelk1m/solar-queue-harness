@@ -5,7 +5,7 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을
 
 # solar-queue-harness
 
-**버전: v4.1 (2026-10-14).** 실행 결과의 첫 줄에 `solar-queue-harness v4`를 출력한다. 원본은 https://github.com/immanuelk1m/solar-queue-harness (main)이다. 업로드된 사본과 내용이 다르면 GitHub 원본을 따른다.
+**버전: v5 (2026-10-14).** 실행 결과의 첫 줄에 `solar-queue-harness v5`를 출력한다. 원본은 https://github.com/immanuelk1m/solar-queue-harness (main)이다. 업로드된 사본과 내용이 다르면 GitHub 원본을 따른다.
 
 로컬 워커는 이 스킬이 `태양풍 큐`에 쓴 행 하나를 받는다. 그 행을 사양 그대로 구현해 리더보드 전체 구간에서 평가한다. 행의 `사양·지시` 칸이 곧 워커의 작업 지시다. 그래서 행 품질이 실험 품질을 결정한다.
 
@@ -20,7 +20,7 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을
 - 시트: https://docs.google.com/spreadsheets/d/1eqmgRn3qJH_44Bkv14piwzhADU2fWZL8-p-d6EzF-nw (탭 `태양풍 연구`, `태양풍 큐`)
 - 모델 스크립트: https://github.com/TLAB-HGU/sunrun-leaderboard/tree/main/scripts/seongeun
 
-반드시 함께 읽을 파일: `references/contract.md`(평가 계약), `references/evidence.md`(확정 사실·닫힌 축), `references/row-template.md`(큐 행 양식), `references/literature.md`(검색·수학 대안 절차), `references/diagnostics.md`(1.5단계 연구 건강 진단 계산법). PIVOT 모드일 때만 `references/pivot.md`도 읽는다.
+반드시 함께 읽을 파일: `references/contract.md`(평가 계약), `references/evidence.md`(확정 사실·닫힌 축), `references/row-template.md`(큐 행 양식), `references/literature.md`(검색·수학 대안 절차), `references/diagnostics.md`(1.5단계 연구 건강 진단 계산법), `references/heuristics.md`(손으로 정한 휴리스틱 금지 규칙). PIVOT 모드일 때만 `references/pivot.md`도 읽는다.
 
 ## 절차 (순서대로, 각 단계 출력을 사용자에게 보인다)
 
@@ -84,6 +84,7 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을
   - H8 발동 → **ARCH 1건**으로 새 계보를 연다. 동시 활성 계보는 최대 2개다. **큐에 대기 중인 `solar-arch-*-s1` 행도 활성으로 센다.** 이미 2개면 새 ARCH를 내지 않는다.
   - ARCH 후보는 과거 계보 표(N1–N5)와 같은 구조 계열이면 새 계보로 내지 않는다. 종료 계보 재개 조건(evidence.md)을 충족할 때만 그 계보의 다음 단계로 낸다.
 - 기본은 **INCREMENT**다. 확정 챔피언 레시피에 단일 변경 1개를 얹는다.
+  - 챔피언 레시피에 있는 휴리스틱 하나(고정 lag, CH threshold 요약, SUVI strip, ENLIL 스칼라 요약, 리드 경계, 멤버·가중, analog 설정, origin grid)를 **학습형 구성요소로 바꾸는 것**도 단일 변경이다(`references/heuristics.md` 허용 형태 1). 새 휴리스틱을 만들거나 그 값을 바꾸는 행은 어떤 모드로도 내지 않는다.
 - 아직 결합되지 않은 스택 후보가 2개 이상이면 **COMBINE** 1건을 먼저 넣는다. 서로 다른 메커니즘의 부분 개선을 함께 얹는 행이다. 기대이득은 단독 감소량 합 × (1 − 겹침 가정 30–60%)로 계산한다. 직전 COMBINE의 가산성 실측값이 있으면 그 값을 겹침 가정 대신 쓴다.
 - 다음 중 하나면 **PIVOT**을 최대 1건 허용한다(`references/pivot.md`). 나머지 행은 여전히 INCREMENT다.
   - 정체 카운터 ≥ 8.
@@ -119,8 +120,9 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을
 3. **인과 가용성.** 각 origin에서 쓰는 모든 입력이 관측 시각(+문서화된 지연, ACE는 +2h) ≤ origin이어야 한다. 학습 target은 2026-05-29 이전이어야 한다.
 4. **비용.** 3-seed 전체 구간 run이 워커 1개(CPU 3–4스레드, DL은 GPU 1장)로 수 시간 안에 끝나야 한다.
 5. **중복 없음.** 시트 두 탭의 Parent/가설/intervention/target/representation과 메커니즘이 달라야 한다. 이름만 다른 같은 메커니즘은 탈락이다.
+6. **휴리스틱 금지.** `references/heuristics.md`의 자가 점검 3문항을 통과해야 한다. 사람이 값을 정한 lag·rolling 창·임계값·공간 분할(strip·sector)·수동 스칼라 요약·리드/구간 경계·멤버 선택·고정 가중·analog K/lookback/거리·origin grid를 새로 넣거나 기존 값을 바꾸는 후보는 탈락이다. 표준 물리량은 문헌 정의를 인용하면 허용한다. 결과를 행의 `[휴리스틱 검사]`에 적는다.
 
-**ARCH·ARCH-STEP 게이트**(위 1·2번 대신 적용, 3·5번은 그대로):
+**ARCH·ARCH-STEP 게이트**(위 1·2번 대신 적용, 3·5·6번은 그대로):
 - 귀납 편향 근거: 왜 이 구조가 고속 셀·shock 창의 도착 시각과 72h level 오차를 per-lead XGBoost보다 잘 잡는지 쓴다.
 - 근거 종류: literature 실측(구조 전체가 비슷한 과제에서 낸 성능) 또는 수학적 근거.
 - 학습 예산: DL은 GPU, seed당 ≥ 30분 또는 early stop 수렴, epoch별 curves 저장. 3-seed가 워커 12시간 안에 끝날 것.
@@ -137,7 +139,7 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을
 - **행 추가 방식.** 반드시 시트 끝에 append(values.append, INSERT_ROWS)로 추가한다. 행 번호를 계산해 특정 행에 덮어쓰지 않는다. 다른 세션이 같은 시각에 행을 추가하고 있을 수 있다. 추가 후 탭을 다시 읽어, 내 ID가 있는지와 바로 앞뒤 행의 ID가 추가 전과 같은지 확인한다. 다른 행을 덮어썼으면 그 행을 원래 내용으로 복구하고 사용자에게 알린다.
 - 기존 행은 수정·삭제하지 않는다.
 - REPLICATE 행은 3% 게이트 대상이 아니다. 1.5단계 H2로만 판단한다. 최대 행 수에는 REPLICATE도 포함된다.
-- 마지막에 사용자에게 다음을 보여 준다: 1.5단계 진단 표와 방향 3줄, 추가한 행 요약 표(ID, 모드, 기준, 변경, 근거 종류, 기대이득), 기각한 후보와 사유, 검토 논문 표.
+- 마지막에 사용자에게 다음을 보여 준다: 1.5단계 진단 표와 방향 3줄, 추가한 행 요약 표(ID, 모드, 기준, 변경, 근거 종류, 기대이득, 휴리스틱 검사), 기각한 후보와 사유, 검토 논문 표.
 
 ## 사양에 절대 쓰지 말 것
 워커는 사양을 그대로 따른다. 다음 문구는 행을 실패시키므로 넣지 않는다.
@@ -146,3 +148,4 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을
 - 사전 조건 대기("캠페인 종료 후", "champion pin 후")와 사전 critic PASS 요구.
 - 제출, 업로드, freeze, official-score 지시.
 - 공식 창 정답이나 미래 정보를 쓰는 설계(오라클은 진단 용도로도 큐 행으로 만들지 않는다).
+- 손으로 정한 휴리스틱 지정(`references/heuristics.md`): "26/27/28일 lag", "N시간 rolling", "임계값 X로 CH 영역 추출", "경도 strip N개", "ENLIL을 k개 스칼라로 요약", "1–6/7–24/25–72h 경계", "멤버 3개를 convex 가중", "branch weight 0.2", "K=15·lookback 365일", "3h grid" 같은 고정 값 지시와, 그 값을 바꿔 보라는 지시.
