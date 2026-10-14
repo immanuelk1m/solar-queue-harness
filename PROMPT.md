@@ -9,9 +9,11 @@ solar-queue-harness 스킬의 절차를 처음부터 끝까지 그대로 실행�
 - https://raw.githubusercontent.com/immanuelk1m/solar-queue-harness/main/references/pivot.md
 - https://raw.githubusercontent.com/immanuelk1m/solar-queue-harness/main/references/diagnostics.md
 - https://raw.githubusercontent.com/immanuelk1m/solar-queue-harness/main/references/heuristics.md
-결과 첫 줄에 SKILL.md에 적힌 버전(`solar-queue-harness v6`)을 출력하세요. v6가 아니면 실행하지 말고 그 사실만 알려 주세요.
+- https://raw.githubusercontent.com/immanuelk1m/solar-queue-harness/main/references/datasets.md
+결과 첫 줄에 SKILL.md에 적힌 버전(`solar-queue-harness v6.1`)을 출력하세요. v6.1이 아니면 실행하지 말고 그 사실만 알려 주세요.
 
 - 시트: https://docs.google.com/spreadsheets/d/1eqmgRn3qJH_44Bkv14piwzhADU2fWZL8-p-d6EzF-nw/edit?gid=0#gid=0 (`태양풍 연구`, `태양풍 큐` 최신 원본 전체)
+- 데이터셋 manifest: https://docs.google.com/spreadsheets/d/1KWgNQPlajHWw7FLUMz3lr4rO2z7sxuxXGstD0-YjAw4 (SolarWind DB; 사용 중·수집 중·평가된 데이터셋과 인과 규칙. 미러 `references/datasets.md`)
 - 모델 스크립트: https://github.com/TLAB-HGU/sunrun-leaderboard/tree/main/scripts/seongeun
 - 특정 E id, SOTA MSE, 목표 MSE, 목표 개선률을 프롬프트에 하드코딩하지 마세요.
 - 매 실행마다 `태양풍 연구` 최신 원본 전체를 읽어 현재 유효 SOTA와 현재 평가 계약의 작업 챔피언을 스스로 확정하세요. 서로 다른 평가 계약의 점수는 억지로 하나의 순위로 합치지 마세요.

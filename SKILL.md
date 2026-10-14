@@ -5,7 +5,7 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을
 
 # solar-queue-harness
 
-**버전: v6 (2026-10-14).** 실행 결과의 첫 줄에 `solar-queue-harness v6`를 출력한다. 원본은 https://github.com/immanuelk1m/solar-queue-harness (main)이다. 업로드된 사본과 내용이 다르면 GitHub 원본을 따른다.
+**버전: v6.1 (2026-10-14).** 실행 결과의 첫 줄에 `solar-queue-harness v6.1`를 출력한다. 원본은 https://github.com/immanuelk1m/solar-queue-harness (main)이다. 업로드된 사본과 내용이 다르면 GitHub 원본을 따른다.
 
 로컬 워커는 이 스킬이 `태양풍 큐`에 쓴 행 하나를 받는다. 그 행을 사양 그대로 구현해 리더보드 전체 구간에서 평가한다. 행의 `사양·지시` 칸이 곧 워커의 작업 지시다. 그래서 행 품질이 실험 품질을 결정한다.
 
@@ -26,9 +26,10 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을
 
 입력:
 - 시트: https://docs.google.com/spreadsheets/d/1eqmgRn3qJH_44Bkv14piwzhADU2fWZL8-p-d6EzF-nw (탭 `태양풍 연구`, `태양풍 큐`)
+- 데이터셋 manifest: https://docs.google.com/spreadsheets/d/1KWgNQPlajHWw7FLUMz3lr4rO2z7sxuxXGstD0-YjAw4 (SolarWind DB, 탭 `데이터셋 manifest`; 미러 `references/datasets.md`)
 - 모델 스크립트: https://github.com/TLAB-HGU/sunrun-leaderboard/tree/main/scripts/seongeun
 
-반드시 함께 읽을 파일: `references/contract.md`(평가 계약), `references/evidence.md`(확정 사실·닫힌 축), `references/row-template.md`(큐 행 양식), `references/literature.md`(검색·수학 대안 절차), `references/diagnostics.md`(1.5단계 연구 건강 진단 계산법), `references/heuristics.md`(손으로 정한 휴리스틱 금지 규칙). PIVOT 모드일 때만 `references/pivot.md`도 읽는다.
+반드시 함께 읽을 파일: `references/contract.md`(평가 계약), `references/evidence.md`(확정 사실·닫힌 축), `references/row-template.md`(큐 행 양식), `references/literature.md`(검색·수학 대안 절차), `references/diagnostics.md`(1.5단계 연구 건강 진단 계산법), `references/heuristics.md`(손으로 정한 휴리스틱 금지 규칙), `references/datasets.md`(사용 중·수집 중·평가된 데이터셋 manifest). PIVOT 모드일 때만 `references/pivot.md`도 읽는다.
 
 ## 절차 (순서대로, 각 단계 출력을 사용자에게 보인다)
 

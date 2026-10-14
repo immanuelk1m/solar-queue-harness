@@ -29,10 +29,12 @@
 - 라벨 성숙: target u는 u + 72h ≤ (학습 시점)일 때만 학습에 쓴다.
 - poison check(미래·미성숙 라벨을 바꿔도 예측이 변하지 않음)를 통과해야 한다.
 
-## 허용 데이터 source (2026-10-13)
+## 허용 데이터 source (2026-10-14)
+- **데이터셋 목록과 상태는 `references/datasets.md`를 본다.** 원본은 Google Sheet [SolarWind DB](https://docs.google.com/spreadsheets/d/1KWgNQPlajHWw7FLUMz3lr4rO2z7sxuxXGstD0-YjAw4/edit) 탭 `데이터셋 manifest`다. 행에서 데이터를 지정할 때 그 ID(SW-xxx)와 로컬 경로를 쓴다.
 - 기존 로컬 store: ACE 플라스마·IMF·EPAM, 27일 recurrence, coronal hole(CH) 특징, SUVI 경도 strip·Fe171 영상(proxy 규칙: S3 LastModified ≤ origin, obs_end ≤ origin−1h), DONKI WSA-Enlil(live API, `modelCompletionTime` ≤ origin).
 - GONG 자기장 지도와 그 파생물(PFSS/WSA/HUXt)은 2026-10-11부터 다시 허용된다. NOAA SWPC WSA-Enlil도 허용된다. 공식 창까지 도달하는 대체 공개 source(OMNI, CDAWeb, SWPC archive)도 쓸 수 있다. source·버전·다운로드 날짜·해시는 기록한다.
 - 새 source는 공식 창(2026-06~09)의 origin마다 그 시각에 얻을 수 있었어야 한다.
+- 2026-10-14부터 새로 수집 중이다: STEREO-A beacon HI1(SW-030)·HI2(SW-031) FITS 전 프레임과 ISEE IPS `STEL{YYYY}.dat`(SW-032), 둘 다 2024-01-01부터다(`~/sunrun/nrt-collect/`, 15분 live). 과거분의 공개 시각 증빙이 없으므로 행마다 보수적 지연 상수를 정해 적는다. 과거 #55(HI 실시간 track 0건)와 #58-1(E0598, ISEE 공개 시각 부재)로 닫힌 이력이 있으니, 다시 쓰는 행은 무엇이 달라졌는지 밝힌다.
 
 ## 자원 (워커 1개 기준)
 - CPU 3–4스레드에 고정된다. 트리·부스팅은 CPU, 딥러닝·파운데이션 모델은 GPU가 필수다(2장 공용, lease 대기).
