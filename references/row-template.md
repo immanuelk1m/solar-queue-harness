@@ -186,6 +186,15 @@ ARCH·ARCH-STEP 행은 같은 줄 끝에 `lineage=<계보> stage=<N> d_prev=<직
 - LITERATURE(구조 전체가 비슷한 과제에서 낸 실측 성능, 링크, 공개 코드·하이퍼파라미터) 또는 MATH+PHYSICS(물리 메커니즘·정의·가정·추정량·반증 조건).
 - 이 계보가 판별하는 architecture 가설과, 성공·실패 시 연구 방향이 어떻게 달라지는지.
 
+[A-GATE]
+- A1 25–72h 병목 직접성: PASS/FAIL — <근거>
+- A2 새로운 인과 정보: PASS/FAIL — <새 propagation/arrival 정보>
+- A3 기존 챔피언 조건부 추가정보: PASS/FAIL — <같은 X의 구조 변경을 넘어 무엇이 추가되는지>
+- A4 propagation bridge: PASS/FAIL — <관측/상태 -> propagation -> arrival -> L1 25–72h>
+- A5 시간 선행성: PASS/FAIL — <pre-arrival lead 근거>
+- 최종 등급: A
+- architecture-only 계보/단계는 A2/A3을 통과하지 못하므로 만들지 않는다.
+
 [휴리스틱 검사]
 - `references/heuristics.md` 자가 점검 3문항의 답. 입력 표현·출력 구조·결합에 사람이 정한 lag·창·임계값·분할·스칼라 요약·리드 경계·가중·grid가 없어야 한다. 남는 값은 "학습형" 또는 "표준 정의(출처)"로 표시한다.
 
