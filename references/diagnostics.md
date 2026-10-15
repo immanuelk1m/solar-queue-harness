@@ -66,7 +66,7 @@ def diag(df, base_id, base_seeds, N=30):
 - p ≥ 0.8이고 H1 또는 H5가 발동했고 a < 2이면 발동한다.
 - 조치: architecture-only ARCH를 자동 생성하지 않는다. H8은 현재 모델 basin 포화를 뜻할 뿐 새 architecture가 새 정보를 만든다는 증거가 아니다.
 - 새 ARCH는 SKILL.md A-GATE A1–A5를 별도로 통과해야 한다. 같은 causal X에서 decoder/backbone/loss/generative formulation만 바꾸는 ARCH는 B급으로 기각한다.
-- A-GATE를 통과하는 ARCH가 없으면 ENABLE-DATA / ENABLE-PHYSICS / INFO-TEST / DATA-DISCOVERY 해결 작업 fallback으로 전환한다.
+- A-GATE를 통과하는 ARCH가 없으면 ENABLE-DATA / ENABLE-PHYSICS / INFO-TEST 해결 작업 fallback으로 전환한다.
 - 과거 E0472/E1022 사례는 historical example일 뿐 현재 판정 입력으로 사용하지 않는다.
 
 ## 진단 신호와 A-GATE의 우선순위

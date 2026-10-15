@@ -67,4 +67,4 @@ E0472 계열(per-lead XGBoost mixture + residual analog) 자체를 버리고 처
 
 ## A급 PIVOT이 없을 때
 
-A등급 PIVOT이 당장 실행 불가능하면 B급 PIVOT을 대신 넣지 않는다. 목표 A급 PIVOT의 blocker를 제거하는 ENABLE-DATA / ENABLE-PHYSICS / INFO-TEST 해결 작업을 낸다. 해결 작업은 완료되면 어떤 A급 예측 실험이 실행되는지 사전에 이름을 적어야 한다.
+A등급 PIVOT이 당장 실행 불가능하면 B급 PIVOT을 대신 넣지 않는다. 목표 A급 PIVOT의 blocker를 제거하는 ENABLE-DATA / ENABLE-PHYSICS / INFO-TEST 해결 작업을 낸다(시트 데이터만 사용). 해결 작업은 완료되면 어떤 A급 예측 실험이 실행되는지 사전에 이름을 적어야 한다.

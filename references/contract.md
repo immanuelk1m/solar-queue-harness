@@ -30,7 +30,7 @@
 - poison check(미래·미성숙 라벨을 바꿔도 예측이 변하지 않음)를 통과해야 한다.
 
 ## 허용 데이터 source (2026-10-14)
-- **데이터는 SolarWind DB 시트(미러 `references/datasets.md`)의 원천(탭 `데이터셋 manifest`)과 원천별 피처 탭에 적힌 파생 항목(SW-xxx)만 쓴다(사용자 2026-10-15, 같은 날 시트 정리로 워커 수집 데이터셋은 삭제됨).** 워커는 외부 데이터를 내려받지 않는다. 새 원천 수집·기존 데이터셋 기간 연장·외부 모델 산출물 취득이 필요한 행은 내지 않는다. 행의 `[필요 데이터·자원]`에는 쓰는 데이터셋을 SW ID와 로컬 경로로만 적는다. 시트에 없는 데이터가 꼭 필요하다고 판단되면 행을 내지 말고 결과 요약에 '데이터 추가 제안'으로 따로 적는다.
+- **데이터는 SolarWind DB 시트(미러 `references/datasets.md`)의 원천(탭 `데이터셋 manifest`)과 원천별 피처 탭에 적힌 파생 항목(SW-xxx)만 쓴다(사용자 2026-10-15, 같은 날 시트 정리로 워커 수집 데이터셋은 삭제됨).** 워커는 외부 데이터를 내려받지 않는다. 새 원천 수집·기존 데이터셋 기간 연장·외부 모델 산출물 취득이 필요한 행은 내지 않는다(ENABLE-DATA도 시트 데이터의 검증·audit만 할 수 있고, DATA-DISCOVERY 모드는 v6.3에서 폐지됨). 행의 `[필요 데이터·자원]`에는 쓰는 데이터셋을 SW ID와 로컬 경로로만 적는다. 시트에 없는 데이터가 꼭 필요하다고 판단되면 행을 내지 말고 결과 요약에 '데이터 추가 제안'으로 따로 적는다.
 - **데이터셋 목록과 상태는 `references/datasets.md`를 본다.** 원본은 Google Sheet [SolarWind DB](https://docs.google.com/spreadsheets/d/1KWgNQPlajHWw7FLUMz3lr4rO2z7sxuxXGstD0-YjAw4/edit) 탭 `데이터셋 manifest`(원천)와 원천별 피처 탭(ACE, SUVI Fe195, SUVI Fe171, DONKI, GONG, STEREO-A HI, ISEE IPS, SWPC Discussion, LASCO C2)이다. 행에서 데이터를 지정할 때 그 ID(SW-xxx)와 로컬 경로를 쓴다.
 - 기존 로컬 store: ACE 플라스마·IMF·EPAM, 27일 recurrence, coronal hole(CH) 특징, SUVI 경도 strip·Fe171 영상(proxy 규칙: S3 LastModified ≤ origin, obs_end ≤ origin−1h), DONKI WSA-Enlil(live API, `modelCompletionTime` ≤ origin).
 - GONG 자기장 지도와 그 파생물(PFSS/WSA/HUXt)은 2026-10-11부터 다시 허용된다. NOAA SWPC WSA-Enlil도 허용된다. 공식 창까지 도달하는 대체 공개 source(OMNI, CDAWeb, SWPC archive)도 쓸 수 있다. source·버전·다운로드 날짜·해시는 기록한다.

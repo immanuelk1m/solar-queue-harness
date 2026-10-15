@@ -4,7 +4,7 @@
 
 ## 열
 - `ID`: 예측 실험은 `solar-<inc|comb|pivot|rep>-<짧은영문이름>-YYYYMMDD`. REPLICATE는 `solar-rep-<대상 E id 소문자>-YYYYMMDD`. ARCH·ARCH-STEP은 `solar-arch-<계보>-s<N>-YYYYMMDD`. 해결 작업은 `solar-<enabledata|enablephys|infotest|discovery>-<짧은영문이름>-YYYYMMDD`. 시트 두 탭에 같은 ID가 있으면 안 된다.
-- `항목`: `[INCREMENT|COMBINE|PIVOT|REPLICATE|ARCH|ARCH-STEP|ENABLE-DATA|ENABLE-PHYSICS|INFO-TEST|DATA-DISCOVERY] <방법 이름> — <한 줄 요약>`
+- `항목`: `[INCREMENT|COMBINE|PIVOT|REPLICATE|ARCH|ARCH-STEP|ENABLE-DATA|ENABLE-PHYSICS|INFO-TEST] <방법 이름> — <한 줄 요약>`
 - `사양·지시`: 아래 본문(한국어, 3,000–8,000자 권장).
 - `갱신 시각`: 추가한 시각(KST).
 
@@ -90,25 +90,24 @@ ARCH·ARCH-STEP 행은 같은 줄 끝에 `lineage=<계보> stage=<N> d_prev=<직
 해결 작업은 leaderboard 성능을 주장하는 예측 실험이 아니다. 이름이 정해진 A급 실험의 실행 blocker를 제거하거나 A-GATE 판정에 필요한 직접 정보를 얻는다.
 
 ```
-[모드] ENABLE-DATA | ENABLE-PHYSICS | INFO-TEST | DATA-DISCOVERY
+[모드] ENABLE-DATA | ENABLE-PHYSICS | INFO-TEST
 
 [목표 A급 실험]
-- <완료 후 실행할 A급 후보 ID/이름>. DATA-DISCOVERY만 아직 이름이 없을 수 있으며, 그 경우 겨냥하는 phase/propagation 병목을 정확히 적는다.
+- <완료 후 실행할 A급 후보 ID/이름>. 이름이 없는 해결 작업은 쓰지 않는다.
 
 [현재 blocker]
 - 왜 지금 A급 예측 실험을 실행할 수 없는지 한 가지 blocker만 적는다.
-- 예: historical publication timestamp 부재, official-window coverage 미확정, 3D field loader 부재, 조건부 정보 존재 여부 미확인.
+- 예: 시트 데이터의 official-window coverage 미확정, available_at 증거 계산 필요, 3D field loader 부재, 조건부 정보 존재 여부 미확인.
 
 [해결 작업]
 - 코드/데이터 수준에서 이번 행이 실제로 수행할 작업을 쓴다.
-- ENABLE-DATA: byte 수집, timestamp/available_at 증거, manifest, coverage audit 등.
+- ENABLE-DATA: SolarWind DB 데이터의 timestamp/available_at 증거, manifest 보강, coverage audit 등. 외부 byte 수집·내려받기는 하지 않는다(사용자 2026-10-15).
 - ENABLE-PHYSICS: propagation model/field/operator의 최소 실행·검증 기반 구축.
 - INFO-TEST: target<cutoff pre-official 데이터에서 champion residual에 대한 조건부 추가정보를 직접 검정.
-- DATA-DISCOVERY: 새 upstream source 후보를 찾고 provider·기간·latency·historical replay 가능성을 검증해 최소 1개를 A-GATE 후보 또는 명시적 기각으로 끝낸다.
 
 [완료 조건]
 - PASS/FAIL을 기계적으로 판정할 산출물과 임계가 아닌 사실 조건을 적는다.
-- 예: manifest에 observation_end/publication_time/available_at/SHA256이 있고 official origins의 causal coverage가 계산됨.
+- 예: 시트 데이터의 manifest에 observation_end/publication_time/available_at/SHA256이 있고 official origins의 causal coverage가 계산됨.
 - 단순히 "조사 완료", "논문 확인"은 완료 조건이 아니다.
 
 [성공 시 다음 행동]

@@ -7,7 +7,7 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 A등급 �
 
 **버전: v6.3 (2026-10-15).** 실행 결과의 첫 줄에 `solar-queue-harness v6.3`를 출력한다. 원본은 https://github.com/immanuelk1m/solar-queue-harness (main)이다. 업로드된 사본과 내용이 다르면 GitHub 원본을 따른다.
 
-로컬 워커는 이 스킬이 `태양풍 큐`에 쓴 행 하나를 받는다. 예측 실험 행은 사양 그대로 구현해 리더보드 전체 구간에서 평가한다. ENABLE-DATA / ENABLE-PHYSICS / INFO-TEST / DATA-DISCOVERY 해결 작업 행은 사양에 적힌 산출물·완료 조건을 수행하며 SOTA/lb-eval 결과로 세지 않는다. 행의 `사양·지시` 칸이 곧 워커의 작업 지시다. 그래서 행 품질이 실험 품질을 결정한다.
+로컬 워커는 이 스킬이 `태양풍 큐`에 쓴 행 하나를 받는다. 예측 실험 행은 사양 그대로 구현해 리더보드 전체 구간에서 평가한다. ENABLE-DATA / ENABLE-PHYSICS / INFO-TEST 해결 작업 행은 사양에 적힌 산출물·완료 조건을 수행하며 SOTA/lb-eval 결과로 세지 않는다. 행의 `사양·지시` 칸이 곧 워커의 작업 지시다. 그래서 행 품질이 실험 품질을 결정한다.
 
 **목표.** 고정된 SOTA E id, MSE 값, 목표 개선률을 스킬에 하드코딩하지 않는다.
 매 실행마다 `태양풍 연구` 최신 원본 전체를 읽고 현재 SOTA와 현재 평가 계약에서의 작업 챔피언을 다시 확정한다.
@@ -19,7 +19,7 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 A등급 �
 **큐 품질 원칙.**
 - 예측 실험은 아래 `A-GATE`를 모두 통과한 A등급만 `태양풍 큐`에 쓴다.
 - 같은 causal 입력을 유지한 채 loss, target transform, output representation, latent-state parameterization, backbone, weighting, sampling, pruning, post-processing만 바꾸는 후보는 B/C등급으로 분류하고 예측 실험 큐에 쓰지 않는다.
-- 단, 문제를 발견하고도 0건으로 끝내지 않는다. A등급 예측 실험이 당장 실행 불가능하면 그 A등급 실험의 blocker를 제거하는 `ENABLE-DATA`, `ENABLE-PHYSICS`, `INFO-TEST`, `DATA-DISCOVERY` 중 최소 1건을 큐에 쓴다.
+- 단, 문제를 발견하고도 0건으로 끝내지 않는다. A등급 예측 실험이 당장 실행 불가능하면 그 A등급 실험의 blocker를 제거하는 `ENABLE-DATA`, `ENABLE-PHYSICS`, `INFO-TEST` 중 최소 1건을 큐에 쓴다.
 - 정보이득은 A등급 후보끼리의 우선순위를 정하는 기준이다. 정보이득만으로 B/C등급 예측 실험을 큐에 승격시키지 않는다.
 
 ## A-GATE — 예측 실험 큐 진입 hard gate
@@ -70,10 +70,11 @@ B/C 후보는 마지막 출력의 `기각 후보`에만 기록한다.
 
 A등급 예측 실험이 0건이면 B/C 실험을 억지로 넣지 말고 다음 순서로 최소 1건의 해결 작업을 만든다.
 
-1. **ENABLE-DATA**: 이름이 정해진 A등급 후보를 막는 데이터 수집·causal availability·coverage·manifest blocker를 제거한다.
+1. **ENABLE-DATA**: 이름이 정해진 A등급 후보를 막는 causal availability·coverage·manifest blocker를 SolarWind DB에 이미 있는 데이터만으로 제거한다(available_at 증거 계산, official origin별 coverage audit, 기존 파생 데이터의 가용 시각 검증). 외부 데이터를 내려받거나 새 원천을 모으는 작업은 쓰지 않는다.
 2. **ENABLE-PHYSICS**: 이름이 정해진 A등급 후보에 필요한 propagation model/field/operator의 최소 실행 기반을 구축한다.
-3. **INFO-TEST**: 유망한 새 source/state가 기존 챔피언 조건부 residual에 추가 정보를 갖는지 pre-cutoff에서 직접 검정한다.
-4. **DATA-DISCOVERY**: 위 셋도 만들 수 없을 때만, 현재 병목을 직접 관측할 새로운 upstream source를 찾고 causal feasibility를 판정한다.
+3. **INFO-TEST**: SolarWind DB의 source/state가 기존 챔피언 조건부 residual에 추가 정보를 갖는지 pre-cutoff에서 직접 검정한다.
+
+시트에 없는 데이터가 꼭 필요하다고 판단되면 행을 내지 말고 결과 요약에 '데이터 추가 제안'(원천·제공처·기간·필요한 이유)으로만 적는다. 데이터 추가는 사용자가 결정한다.
 
 해결 작업은 반드시 `[목표 A급 실험]`, `[현재 blocker]`, `[완료 조건]`, `[성공 시 다음 행동]`, `[실패 시 다음 행동]`을 가져야 한다. 막연한 문헌조사나 "데이터를 더 찾아본다"는 행은 금지한다.
 
@@ -242,7 +243,7 @@ A등급 예측 실험이 0건이면 B/C 실험을 억지로 넣지 말고 다음
 
 ### 7. 큐 반영
 - A-GATE와 나머지 게이트를 통과한 A등급 예측 후보를 우선순위 순으로 **최대 4건** `태양풍 큐`에 추가한다. 4번째 자리는 ARCH-STEP 전용이다. ARCH-STEP이 없으면 최대 3건이다.
-- **0건으로 끝내지 않는다.** A등급 예측 후보가 없으면 B/C 예측 실험을 추가하지 말고 `0건 방지 — 해결 작업 fallback`에 따라 최소 1건의 ENABLE-DATA / ENABLE-PHYSICS / INFO-TEST / DATA-DISCOVERY 행을 추가한다.
+- **0건으로 끝내지 않는다.** A등급 예측 후보가 없으면 B/C 예측 실험을 추가하지 말고 `0건 방지 — 해결 작업 fallback`에 따라 최소 1건의 ENABLE-DATA / ENABLE-PHYSICS / INFO-TEST 행을 추가한다. 시트 데이터만으로 셋 다 만들 수 없으면 이유와 '데이터 추가 제안'을 쓴다.
 - 해결 작업은 반드시 이름이 정해진 목표 A급 실험 또는 현재 가장 큰 phase/propagation 불확실성과 연결되어야 한다.
 - LOW-CONFIDENCE는 A-GATE를 우회하는 예측 실험 모드로 사용하지 않는다.
   - 열은 `ID`, `항목`, `사양·지시`, `갱신 시각`이다.

@@ -64,9 +64,9 @@
 
 A급 예측 후보가 없으면 문헌 검색을 B급 모델 아이디어 생성에 쓰지 않는다. 대신 현재 가장 유망한 A급 후보가 왜 막혀 있는지 분류한다.
 
-- 데이터 availability/coverage가 blocker면 ENABLE-DATA.
+- 데이터 availability/coverage가 blocker면 ENABLE-DATA(시트에 있는 데이터의 가용 시각·coverage 검증만; 내려받기 없음).
 - propagation implementation이 blocker면 ENABLE-PHYSICS.
 - source의 조건부 추가정보 존재 여부가 blocker면 INFO-TEST.
-- 적절한 upstream source 자체가 없으면 DATA-DISCOVERY.
+- 적절한 source가 시트에 없으면 행을 내지 말고 '데이터 추가 제안'으로만 적는다(사용자가 결정).
 
 각 해결 작업은 목표 A급 실험과 완료 조건을 명시해야 하며, 문헌조사 자체를 완료 조건으로 두지 않는다.

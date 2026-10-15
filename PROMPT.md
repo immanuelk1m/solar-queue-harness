@@ -29,4 +29,4 @@ solar-queue-harness 스킬의 절차를 처음부터 끝까지 그대로 실행�
 - exploitation이 필요하면 현재 작업 챔피언 위 단일 변경(INCREMENT)을 사용합니다.
 - 연구 건강 진단이 포화·선택효과·아키텍처 고착을 보이면 PIVOT/ARCH/new-information 후보를 우선합니다.
 - 같은 basin의 국소 변경만 반복하지 말고, 후보가 성공 또는 실패했을 때 어떤 큰 연구가설의 확률이 달라지는지를 명시하세요.
-- A-GATE와 후보 게이트를 모두 통과한 A등급 예측 행만 `태양풍 큐`에 최대 4건 추가하세요(`references/row-template.md`). **0건으로 끝내지 않습니다.** 다만 A등급 예측 후보가 없을 때 B/C LOW-CONFIDENCE 예측 실험을 억지로 넣지 말고, 목표 A급 실험의 blocker를 제거하는 ENABLE-DATA / ENABLE-PHYSICS / INFO-TEST / DATA-DISCOVERY 해결 작업을 최소 1건 추가하세요. 마지막에 상태 표·추가 행 요약·기각 후보·검토 논문 표를 보여 주세요.
+- A-GATE와 후보 게이트를 모두 통과한 A등급 예측 행만 `태양풍 큐`에 최대 4건 추가하세요(`references/row-template.md`). **0건으로 끝내지 않습니다.** 다만 A등급 예측 후보가 없을 때 B/C LOW-CONFIDENCE 예측 실험을 억지로 넣지 말고, 목표 A급 실험의 blocker를 제거하는 ENABLE-DATA / ENABLE-PHYSICS / INFO-TEST 해결 작업(시트에 있는 데이터만 사용, 내려받기·새 원천 탐색 금지)을 최소 1건 추가하세요. 시트에 없는 데이터가 필요하면 행을 내지 말고 '데이터 추가 제안'으로만 적으세요. 마지막에 상태 표·추가 행 요약·기각 후보·검토 논문 표를 보여 주세요.
