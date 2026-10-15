@@ -18,7 +18,11 @@
 | 고속 셀의 진폭 과소추정 | extreme value regression time series underestimation peaks; conditional quantile forecast heavy tail |
 | 리드별 transfer 붕괴 | distribution shift multi-horizon forecasting solar cycle nonstationarity |
 
-### 논문 채택 체크리스트 (모두 예여야 채택)
+### 논문 채택 체크리스트 (모두 예여야 예측 실험 후보로 채택)
+- [ ] SKILL.md A-GATE A1–A5를 모두 만족한다.
+- [ ] 기존 챔피언 입력을 이미 안다고 할 때 어떤 새 propagation/arrival 정보가 조건부로 남는지 설명할 수 있다.
+- [ ] 해당 정보가 L1 도착 전에 존재한다.
+- [ ] 같은 causal X의 representation/loss/target만 바꾸는 논문이 아니다.
 - [ ] 메커니즘이 2단계에서 측정한 오차 성분 하나를 직접 겨냥한다.
 - [ ] 필요한 입력이 contract.md의 허용 source로 인과적으로 얻어진다(origin 시각에 존재).
 - [ ] 챔피언 레시피 위에 단일 변경으로 옮길 수 있다(PIVOT·ARCH 제외).
@@ -33,6 +37,8 @@
 
 논문의 benchmark 개선률은 후보 통과 조건으로 사용하지 않는다.
 우리 문제에서 예상 개선률을 신뢰성 있게 계산할 수 없는 것은 기각 사유가 아니다.
+
+단, A-GATE를 통과하지 못하는 논문은 연구 배경/기각 후보로만 남긴다. "같은 입력을 더 잘 모델링한다"는 근거만으로 예측 큐에 올리지 않는다.
 
 검토한 논문은 모두 표로 남긴다: 제목 / 저자 / 연도 / 링크 / 메커니즘 / 채택·기각 사유(체크리스트의 어느 항목 때문인지).
 
@@ -52,3 +58,15 @@
 ## C. 근거 표기
 - LITERATURE 행: `[가설·근거]`에 논문 링크와 "우리 문제로 옮기는 방식"을 쓴다.
 - MATH/PHYSICS 행: `[가설·근거]`에 대상 성분·물리 메커니즘·수학적 추정량·반증 조건(위 1–4)을 적고, `[연구 가치와 정보이득]`에 성공/실패 시 의사결정 변화(5)를, `[단일 변경]`에 6을 쓴다.
+
+
+## D. A급 예측 후보가 없을 때 literature의 역할
+
+A급 예측 후보가 없으면 문헌 검색을 B급 모델 아이디어 생성에 쓰지 않는다. 대신 현재 가장 유망한 A급 후보가 왜 막혀 있는지 분류한다.
+
+- 데이터 availability/coverage가 blocker면 ENABLE-DATA.
+- propagation implementation이 blocker면 ENABLE-PHYSICS.
+- source의 조건부 추가정보 존재 여부가 blocker면 INFO-TEST.
+- 적절한 upstream source 자체가 없으면 DATA-DISCOVERY.
+
+각 해결 작업은 목표 A급 실험과 완료 조건을 명시해야 하며, 문헌조사 자체를 완료 조건으로 두지 않는다.

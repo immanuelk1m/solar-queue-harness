@@ -3,8 +3,8 @@
 워커는 `사양·지시` 칸을 그대로 작업 지시로 읽는다. 아래 대괄호 필드명을 바꾸지 말고 순서대로 모두 채운다. 모르는 값은 "미확인(워커가 시트·코드에서 확인)"으로 적는다.
 
 ## 열
-- `ID`: `solar-<inc|comb|pivot|rep>-<짧은영문이름>-YYYYMMDD`. REPLICATE는 `solar-rep-<대상 E id 소문자>-YYYYMMDD`. ARCH·ARCH-STEP은 `solar-arch-<계보>-s<N>-YYYYMMDD`(계보 이름은 짧은 영문 소문자, 계보 안에서 고정). 시트 두 탭에 같은 ID가 있으면 안 된다.
-- `항목`: `[INCREMENT|COMBINE|PIVOT|REPLICATE|ARCH|ARCH-STEP] <방법 이름> — <한 줄 요약>`
+- `ID`: 예측 실험은 `solar-<inc|comb|pivot|rep>-<짧은영문이름>-YYYYMMDD`. REPLICATE는 `solar-rep-<대상 E id 소문자>-YYYYMMDD`. ARCH·ARCH-STEP은 `solar-arch-<계보>-s<N>-YYYYMMDD`. 해결 작업은 `solar-<enabledata|enablephys|infotest|discovery>-<짧은영문이름>-YYYYMMDD`. 시트 두 탭에 같은 ID가 있으면 안 된다.
+- `항목`: `[INCREMENT|COMBINE|PIVOT|REPLICATE|ARCH|ARCH-STEP|ENABLE-DATA|ENABLE-PHYSICS|INFO-TEST|DATA-DISCOVERY] <방법 이름> — <한 줄 요약>`
 - `사양·지시`: 아래 본문(한국어, 3,000–8,000자 권장).
 - `갱신 시각`: 추가한 시각(KST).
 
@@ -36,6 +36,16 @@
 - **기존 연구와의 직교성:** 기존 champion/HPO/feature/head가 보지 못하던 어떤 정보·표현·물리상태를 보는지.
 - **병목 연결:** 현재 오차 질량이나 오라클 headroom 중 어느 부분을 직접 조사하는지.
 - 예상 MSE 개선률은 신뢰성 있는 근거가 있을 때만 참고로 적을 수 있다. 수치가 없거나 작다는 이유만으로 후보를 탈락시키지 않는다.
+
+[A-GATE]
+- A1 25–72h 병목 직접성: PASS/FAIL — <근거>
+- A2 새로운 인과 정보: PASS/FAIL — <새 관측 / propagation state / arrival posterior / pre-arrival precursor>
+- A3 기존 챔피언 조건부 추가정보: PASS/FAIL — <ACE+CH/SUVI+DONKI/ENLIL+recurrence를 알아도 남는 정보>
+- A4 propagation bridge: PASS/FAIL — <관측/상태 -> heliospheric propagation -> arrival phase -> L1 25–72h speed>
+- A5 시간 선행성: PASS/FAIL — <lead-time 또는 물리적 선행 근거>
+- 최종 등급: A
+
+다섯 항목 모두 PASS가 아니면 이 예측 행 자체를 만들지 않는다. B/C는 기각 후보 표에만 기록한다.
 
 [휴리스틱 검사]
 - `references/heuristics.md` 자가 점검 3문항의 답.
@@ -70,10 +80,60 @@
 - 시트 `태양풍 연구`/`태양풍 큐`에서 가장 가까운 기존 행 2–3개의 ID와, 메커니즘이 어떻게 다른지.
 ```
 
-## 결과 기록 줄 (모든 모드 공통 — 워커가 결과 칸 첫 줄에 쓴다)
+## 결과 기록 줄 (예측 모드 공통 — INCREMENT/COMBINE/PIVOT/ARCH/ARCH-STEP, 워커가 결과 칸 첫 줄에 쓴다)
 `LB| E=<id> base=<base id> seeds=<s0,s1,s2> mse=<a/b/c> mean=<m> d_base=<값,%> cells=<llh/lhh/hlh/hhh> type=<특징 블록 추가|후처리·잔차|하이퍼파라미터|예측 대상 변경|구조·학습 단위|새 정보원|replicate|arch>`
 ARCH·ARCH-STEP 행은 같은 줄 끝에 `lineage=<계보> stage=<N> d_prev=<직전 단계 대비 값,%>`를 붙이고, `base`에는 비교 대상인 확정 챔피언 E id를 쓴다.
 사양 끝에 "결과 칸 첫 줄에 위 `LB|` 줄을 쓴다"를 적는다.
+
+## 해결 작업 양식 — A급 예측 실험이 0건일 때
+
+해결 작업은 leaderboard 성능을 주장하는 예측 실험이 아니다. 이름이 정해진 A급 실험의 실행 blocker를 제거하거나 A-GATE 판정에 필요한 직접 정보를 얻는다.
+
+```
+[모드] ENABLE-DATA | ENABLE-PHYSICS | INFO-TEST | DATA-DISCOVERY
+
+[목표 A급 실험]
+- <완료 후 실행할 A급 후보 ID/이름>. DATA-DISCOVERY만 아직 이름이 없을 수 있으며, 그 경우 겨냥하는 phase/propagation 병목을 정확히 적는다.
+
+[현재 blocker]
+- 왜 지금 A급 예측 실험을 실행할 수 없는지 한 가지 blocker만 적는다.
+- 예: historical publication timestamp 부재, official-window coverage 미확정, 3D field loader 부재, 조건부 정보 존재 여부 미확인.
+
+[해결 작업]
+- 코드/데이터 수준에서 이번 행이 실제로 수행할 작업을 쓴다.
+- ENABLE-DATA: byte 수집, timestamp/available_at 증거, manifest, coverage audit 등.
+- ENABLE-PHYSICS: propagation model/field/operator의 최소 실행·검증 기반 구축.
+- INFO-TEST: target<cutoff pre-official 데이터에서 champion residual에 대한 조건부 추가정보를 직접 검정.
+- DATA-DISCOVERY: 새 upstream source 후보를 찾고 provider·기간·latency·historical replay 가능성을 검증해 최소 1개를 A-GATE 후보 또는 명시적 기각으로 끝낸다.
+
+[완료 조건]
+- PASS/FAIL을 기계적으로 판정할 산출물과 임계가 아닌 사실 조건을 적는다.
+- 예: manifest에 observation_end/publication_time/available_at/SHA256이 있고 official origins의 causal coverage가 계산됨.
+- 단순히 "조사 완료", "논문 확인"은 완료 조건이 아니다.
+
+[성공 시 다음 행동]
+- 어떤 A급 예측 행을 바로 추가/실행할지 적는다.
+
+[실패 시 다음 행동]
+- 어떤 축을 보류하고 다음 A급 후보/다음 blocker로 이동할지 적는다.
+- 실패해도 B/C 예측 실험으로 fallback하지 않는다.
+
+[인과 가용성]
+- official truth를 fit/selection에 사용하지 않는다.
+- INFO-TEST는 target<2026-05-29와 label maturity를 지킨다.
+- DATA/PHYSICS 작업도 historical replay 가능성을 증명해야 한다.
+
+[필요 데이터·자원]
+- source, 저장 위치, 예상 용량, CPU/GPU, 외부 다운로드 여부.
+
+[중복 검사]
+- 같은 blocker를 이미 처리 중인 큐/연구 행이 없는지 확인한다.
+
+[결과 기록]
+- 첫 줄 `ENABLE| mode=<mode> target=<A급 후보 또는 병목> blocker=<짧은키> verdict=<ready|blocked|informative|not_informative> next=<다음 ID/행동>`.
+```
+
+해결 작업은 A-GATE의 대체 예측 실험이 아니다. 완료된 해결 작업 자체를 SOTA/챔피언/스택 후보로 세지 않는다.
 
 ## REPLICATE 양식
 ```
@@ -125,6 +185,15 @@ ARCH·ARCH-STEP 행은 같은 줄 끝에 `lineage=<계보> stage=<N> d_prev=<직
 [가설·근거]
 - LITERATURE(구조 전체가 비슷한 과제에서 낸 실측 성능, 링크, 공개 코드·하이퍼파라미터) 또는 MATH+PHYSICS(물리 메커니즘·정의·가정·추정량·반증 조건).
 - 이 계보가 판별하는 architecture 가설과, 성공·실패 시 연구 방향이 어떻게 달라지는지.
+
+[A-GATE]
+- A1 25–72h 병목 직접성: PASS/FAIL — <근거>
+- A2 새로운 인과 정보: PASS/FAIL — <새 propagation/arrival 정보>
+- A3 기존 챔피언 조건부 추가정보: PASS/FAIL — <같은 X의 구조 변경을 넘어 무엇이 추가되는지>
+- A4 propagation bridge: PASS/FAIL — <관측/상태 -> propagation -> arrival -> L1 25–72h>
+- A5 시간 선행성: PASS/FAIL — <pre-arrival lead 근거>
+- 최종 등급: A
+- architecture-only 계보/단계는 A2/A3을 통과하지 못하므로 만들지 않는다.
 
 [휴리스틱 검사]
 - `references/heuristics.md` 자가 점검 3문항의 답. 입력 표현·출력 구조·결합에 사람이 정한 lag·창·임계값·분할·스칼라 요약·리드 경계·가중·grid가 없어야 한다. 남는 값은 "학습형" 또는 "표준 정의(출처)"로 표시한다.

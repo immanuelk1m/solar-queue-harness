@@ -1,20 +1,81 @@
 ---
 name: solar-queue-harness
-description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을 설계해 Google Sheet `태양풍 큐`에 추가하는 하네스. 시트 `태양풍 연구`/`태양풍 큐`와 GitHub 모델 스크립트를 읽어 현재 SOTA·작업 챔피언·병목·미해결 연구가설을 동적으로 확정한다. 웹 literature와 내부 실험 근거를 사용하되, literature가 불충분하면 수학적 모델과 태양풍의 물리적 메커니즘을 함께 사용해 검증 가능한 가설을 만든다. 후보는 예상 MSE 개선률이 아니라 정보이득, 가설 판별력, 병목과의 직접성, 기존 연구와의 비중복성을 중심으로 선택한다. 태양풍 큐 추가, 다음 실험 제안, 연구 방향 진단을 요청받으면 사용한다.
+description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 A등급 예측 실험 또는 그 실험을 가능하게 하는 해결 작업을 설계해 Google Sheet `태양풍 큐`에 추가하는 하네스. 시트 `태양풍 연구`/`태양풍 큐`와 GitHub 모델 스크립트를 읽어 현재 SOTA·작업 챔피언·병목·미해결 연구가설을 동적으로 확정한다. 25–72h propagation/arrival 정보를 새로 제공하는 예측 실험만 큐에 허용하고, 실행 가능한 A등급 후보가 없으면 data/physics/info blocker를 제거하는 해결 작업을 최소 1건 만든다. 태양풍 큐 추가, 다음 실험 제안, 연구 방향 진단을 요청받으면 사용한다.
 ---
 
 # solar-queue-harness
 
-**버전: v6.2 (2026-10-14).** 실행 결과의 첫 줄에 `solar-queue-harness v6.2`를 출력한다. 원본은 https://github.com/immanuelk1m/solar-queue-harness (main)이다. 업로드된 사본과 내용이 다르면 GitHub 원본을 따른다.
+**버전: v6.3 (2026-10-15).** 실행 결과의 첫 줄에 `solar-queue-harness v6.3`를 출력한다. 원본은 https://github.com/immanuelk1m/solar-queue-harness (main)이다. 업로드된 사본과 내용이 다르면 GitHub 원본을 따른다.
 
-로컬 워커는 이 스킬이 `태양풍 큐`에 쓴 행 하나를 받는다. 그 행을 사양 그대로 구현해 리더보드 전체 구간에서 평가한다. 행의 `사양·지시` 칸이 곧 워커의 작업 지시다. 그래서 행 품질이 실험 품질을 결정한다.
+로컬 워커는 이 스킬이 `태양풍 큐`에 쓴 행 하나를 받는다. 예측 실험 행은 사양 그대로 구현해 리더보드 전체 구간에서 평가한다. ENABLE-DATA / ENABLE-PHYSICS / INFO-TEST / DATA-DISCOVERY 해결 작업 행은 사양에 적힌 산출물·완료 조건을 수행하며 SOTA/lb-eval 결과로 세지 않는다. 행의 `사양·지시` 칸이 곧 워커의 작업 지시다. 그래서 행 품질이 실험 품질을 결정한다.
 
 **목표.** 고정된 SOTA E id, MSE 값, 목표 개선률을 스킬에 하드코딩하지 않는다.
 매 실행마다 `태양풍 연구` 최신 원본 전체를 읽고 현재 SOTA와 현재 평가 계약에서의 작업 챔피언을 다시 확정한다.
 
 이 스킬의 목적은 다음 두 가지다.
 1. 현재 SOTA보다 재현 가능하게 더 나은 예측기를 찾는다.
-2. 성능 개선 여부와 별개로, 다음 연구 방향을 결정하는 데 큰 정보를 주는 실험을 우선적으로 수행해 연구 공간을 줄인다.
+2. 현재 핵심 병목을 실제로 해결하는 다음 행동을 항상 최소 1건 만든다. 특히 25–72h event phase / heliospheric propagation / arrival uncertainty를 더 식별할 수 있는 새 인과 정보를 우선한다.
+
+**큐 품질 원칙.**
+- 예측 실험은 아래 `A-GATE`를 모두 통과한 A등급만 `태양풍 큐`에 쓴다.
+- 같은 causal 입력을 유지한 채 loss, target transform, output representation, latent-state parameterization, backbone, weighting, sampling, pruning, post-processing만 바꾸는 후보는 B/C등급으로 분류하고 예측 실험 큐에 쓰지 않는다.
+- 단, 문제를 발견하고도 0건으로 끝내지 않는다. A등급 예측 실험이 당장 실행 불가능하면 그 A등급 실험의 blocker를 제거하는 `ENABLE-DATA`, `ENABLE-PHYSICS`, `INFO-TEST`, `DATA-DISCOVERY` 중 최소 1건을 큐에 쓴다.
+- 정보이득은 A등급 후보끼리의 우선순위를 정하는 기준이다. 정보이득만으로 B/C등급 예측 실험을 큐에 승격시키지 않는다.
+
+## A-GATE — 예측 실험 큐 진입 hard gate
+
+예측 후보는 A1–A5를 모두 만족해야 한다.
+
+### A1. 25–72h 병목 직접성
+- 25–72h event arrival phase, HSS/CIR/CME propagation, shock arrival, 또는 미래 background-wind state 중 하나를 직접 더 식별해야 한다.
+- 현재 L1 상태를 더 잘 분류하는 것만으로는 통과하지 않는다.
+
+### A2. 새로운 인과 정보
+다음 중 하나 이상이어야 한다.
+- 새 원격/상류 관측: coronagraph, heliospheric imager, IPS, radio shock, energetic-particle/GCR precursor 등.
+- 실제 propagation state/field: WSA/HUXt/ENLIL/MHD/SFT 등에서 lead에 따라 전파되는 물리 상태.
+- 독립적인 arrival posterior: 다중 operational forecast, ensemble propagation, forecast revision trajectory 등.
+- Earth 도착 전에 관측되는 precursor로서 문헌 또는 내부 검정에서 유의미한 lead-time 근거가 있는 상태.
+
+아래 변경만으로는 새 정보로 인정하지 않는다.
+- loss 또는 target transform
+- trajectory basis/decomposition
+- latent-state / diffusion / generative head / regime decoder
+- model backbone
+- sampling/origin weighting, feature weighting, pruning/selection
+- post-processing, residual correction, ensemble/stacking만 변경
+
+### A3. 조건부 추가정보
+후보는 반드시 다음 질문에 한 문장으로 답해야 한다.
+`기존 챔피언의 ACE + CH/SUVI + DONKI/ENLIL + recurrence를 이미 안다고 할 때도 무엇이 추가로 남는가?`
+답이 "더 좋은 representation일 수 있다" 수준이면 탈락한다.
+
+### A4. propagation bridge
+사양에 반드시 아래 물리 경로를 구체적으로 쓴다.
+`관측/상태 -> heliospheric propagation -> arrival phase -> L1 25–72h speed`
+중간 propagation 상태 또는 pre-arrival precursor가 없는 `solar source -> ML -> future speed` 직결 가설은 원칙적으로 탈락한다.
+
+### A5. 시간 선행성
+새 정보가 event가 L1에 도착한 뒤에만 드러나는 정보라면 탈락한다.
+25–72h 예측에 의미 있는 선행성이 있음을 문헌, provider timing, physical propagation equation, 또는 pre-cutoff information test로 근거화해야 한다.
+
+### 등급
+- **A**: A1–A5 모두 통과 → 예측 실험 큐 가능.
+- **B**: 병목 관련 구조/표현 실험이지만 새로운 propagation/arrival 정보가 없음 → 예측 실험 큐 금지.
+- **C**: weighting/HPO/target-transform/post-hoc/late L1-state/단순 결합 → 예측 실험 큐 금지.
+
+B/C 후보는 마지막 출력의 `기각 후보`에만 기록한다.
+
+## 0건 방지 — 해결 작업 fallback
+
+A등급 예측 실험이 0건이면 B/C 실험을 억지로 넣지 말고 다음 순서로 최소 1건의 해결 작업을 만든다.
+
+1. **ENABLE-DATA**: 이름이 정해진 A등급 후보를 막는 데이터 수집·causal availability·coverage·manifest blocker를 제거한다.
+2. **ENABLE-PHYSICS**: 이름이 정해진 A등급 후보에 필요한 propagation model/field/operator의 최소 실행 기반을 구축한다.
+3. **INFO-TEST**: 유망한 새 source/state가 기존 챔피언 조건부 residual에 추가 정보를 갖는지 pre-cutoff에서 직접 검정한다.
+4. **DATA-DISCOVERY**: 위 셋도 만들 수 없을 때만, 현재 병목을 직접 관측할 새로운 upstream source를 찾고 causal feasibility를 판정한다.
+
+해결 작업은 반드시 `[목표 A급 실험]`, `[현재 blocker]`, `[완료 조건]`, `[성공 시 다음 행동]`, `[실패 시 다음 행동]`을 가져야 한다. 막연한 문헌조사나 "데이터를 더 찾아본다"는 행은 금지한다.
 
 **기준은 매 실행 동적으로 확정한다.**
 - **현재 SOTA**: `태양풍 연구`의 리더보드 전체 구간 결과 중 오라클·hindsight·계약 위반·무효 run을 제외하고, 서로 비교 가능한 공식 평가 계약에서 가장 좋은 유효 seed-mean MSE를 가진 run으로 확정한다. 시트에 SOTA/채택 상태가 명시되어 있으면 함께 교차검증한다.
@@ -67,7 +128,7 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을
 | H5 유형 포화 | 최근 15개 행을 intervention 유형으로 분류: 특징 블록 추가 / 후처리·잔차 / 하이퍼파라미터 / 예측 대상 변경 / 구조·학습 단위 / 새 정보원 | 한 유형이 ≥ 60%이고 그중 확정 개선 0건 | 그 유형을 이번 실행에서 금지한다. 다른 층에서만 후보를 낸다 |
 | H6 오차 정렬 | 최근 개선 행(잠정 포함)이 줄인 셀·리드와, 확정 챔피언의 오차 질량(고속 셀 4개·shock 창) 비교 | 개선이 저속 셀에서만 나고 고속 셀은 악화 | 이번 실행의 모든 신규 행은 고속 셀·shock 창 오차를 직접 겨냥하고, 그 성분에 대한 가설을 판별하도록 설계한다 |
 | H7 반복 고장 | 같은 메커니즘의 인프라 실패 ≥ 2회, 또는 처음부터 새로 짠 한 행짜리 모델이 +20% 이상 악화 | 해당 | INCREMENT·PIVOT에서는 그 메커니즘을 base 위 단일 변경 형태로만 다시 제안한다. 한 행짜리 독립 모델 재구현은 금지한다. ARCH 계보는 이 금지에서 제외한다. 단발 실패는 예산 없이 한 번에 만든 결과이기 때문이다 |
-| H8 아키텍처/계보 고착 | 최근 15행을 base 계보별로 묶었을 때 가장 많이 쓰인 한 계보의 비율(계보는 시트의 parent/base 관계와 구조 계열로 계산), 활성 ARCH 계보 수 | 비율 ≥ 80%이고 H1 또는 H5가 발동했고 활성 계보 < 2 | **ARCH 1건**으로 새 계보를 연다(`references/pivot.md` "아키텍처 피봇") |
+| H8 아키텍처/계보 고착 | 최근 15행을 base 계보별로 묶었을 때 가장 많이 쓰인 한 계보의 비율(계보는 시트의 parent/base 관계와 구조 계열로 계산), 활성 ARCH 계보 수 | 비율 ≥ 80%이고 H1 또는 H5가 발동했고 활성 계보 < 2 | architecture-only ARCH를 자동 생성하지 않는다. A-GATE를 통과하는 새 propagation/arrival 정보가 결합된 ARCH만 허용한다. 없으면 0건 방지 fallback으로 해결 작업을 낸다. |
 
 진단 표 아래에 **"이번 실행이 바꾸는 연구 방향" 3줄**을 쓴다. 각 줄에 근거 신호를 단다. 예: "특징 블록 추가 유형을 금지한다(H1·H3·H5)."
 
@@ -87,17 +148,17 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을
 - 이런 축은 같은 메커니즘이라도 다시 제안할 수 있다. 다만 그 행이 이미 `LBRE-*`/`RERUN-*`로 재평가 대기 중이면 중복이다.
 
 ### 3. 모드 결정
-- **1.5단계 진단이 먼저다.** 발동한 신호의 조치가 아래 기본 규칙보다 우선한다.
+- **1.5단계 진단이 먼저다.** 발동한 신호는 후보 탐색 방향을 바꾸지만 A-GATE를 우회할 수 없다.
   - H2 발동 → REPLICATE 행을 먼저 쓴다.
-  - H1·H5 발동 → 구조 전환(PIVOT) 행을 최소 1건 쓴다. 금지된 유형의 INCREMENT는 쓰지 않는다.
+  - H1·H5 발동 → A-GATE를 통과하는 구조 전환(PIVOT) 후보를 우선 찾는다. 없으면 해결 작업 fallback으로 전환한다.
   - H3 발동 → 해당 재료의 COMBINE은 쓰지 않는다.
   - H6 발동 → 모든 행이 고속 셀·shock 창을 겨냥한다.
-  - **활성 ARCH 계보마다 ARCH-STEP 1건**을 REPLICATE 다음 순위로 낸다. 계보의 다음 단계 변경 하나다. 종료 규칙에 걸린 계보는 내지 않는다.
-  - H8 발동 → **ARCH 1건**으로 새 계보를 연다. 동시 활성 계보는 최대 2개다. **큐에 대기 중인 `solar-arch-*-s1` 행도 활성으로 센다.** 이미 2개면 새 ARCH를 내지 않는다.
+  - 활성 ARCH 계보도 다음 단계가 A-GATE를 통과할 때만 ARCH-STEP을 낸다. 같은 입력의 architecture-only 다음 단계라면 더 진행하지 않고 해결 작업 fallback 또는 다른 A급 후보로 전환한다.
+  - H8 발동 → architecture-only 새 계보는 열지 않는다. A-GATE를 통과하는 새 propagation/arrival 정보가 포함된 ARCH만 허용한다. 동시 활성 계보는 최대 2개다. **큐에 대기 중인 `solar-arch-*-s1` 행도 활성으로 센다.** 이미 2개면 새 ARCH를 내지 않는다.
   - ARCH 후보는 과거 계보 표(N1–N5)와 같은 구조 계열이면 새 계보로 내지 않는다. 종료 계보 재개 조건(evidence.md)을 충족할 때만 그 계보의 다음 단계로 낸다.
-- 기본은 **INCREMENT**다. 확정 챔피언 레시피에 단일 변경 1개를 얹는다.
-  - 챔피언 레시피에 있는 휴리스틱 하나(고정 lag, CH threshold 요약, SUVI strip, ENLIL 스칼라 요약, 리드 경계, 멤버·가중, analog 설정, origin grid)를 **학습형 구성요소로 바꾸는 것**도 단일 변경이다(`references/heuristics.md` 허용 형태 1). 새 휴리스틱을 만들거나 그 값을 바꾸는 행은 어떤 모드로도 내지 않는다.
-- 아직 결합되지 않은 스택 후보가 2개 이상이면 **COMBINE** 1건을 먼저 넣는다. 서로 다른 메커니즘의 부분 개선을 함께 얹는 행이다. 이 행이 판별하는 가설은 "재료들이 서로 독립인 정보를 주는가(가산성)"다. 단독 감소량 합과 직전 COMBINE의 가산성 실측값은 참고로만 적는다.
+- 기본은 **A-GATE를 통과한 INCREMENT/PIVOT**다. 확정 챔피언 레시피에 단일 변경 1개를 얹는다.
+  - 챔피언 레시피의 휴리스틱을 학습형 구성요소로 바꾸는 것만으로는 큐 진입 사유가 아니다. A2의 새 propagation/arrival 정보가 함께 없으면 B/C로 기각한다. 새 휴리스틱을 만들거나 그 값을 바꾸는 행은 어떤 모드로도 내지 않는다.
+- COMBINE은 재료가 모두 A-GATE를 통과했고 각각 독립 full-lb/REPLICATE에서 유효 신호가 확인된 경우에만 허용한다. B/C 재료의 STACK/COMBINE은 금지한다.
 - 다음 중 하나면 **PIVOT**을 최대 1건 허용한다(`references/pivot.md`). 나머지 행은 여전히 INCREMENT다.
   - 정체 카운터 ≥ 8.
   - 현재 intervention 층에서 병목에 대한 새로운 정보를 주거나 중요한 가설을 판별할 비중복 후보를 찾지 못했다.
@@ -147,7 +208,10 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을
 예상 MSE 개선률 계산은 선택 사항이다. 계산할 근거가 없으면 억지로 수치를 만들지 않는다.
 "복잡도 감소", "pruning", "robustness" 같은 일반론만으로는 후보가 아니다. 반드시 측정된 오차 성분과 연결한다.
 
-### 6. 후보 게이트 (모두 통과해야 큐에 쓴다)
+### 6. 후보 게이트 (예측 실험은 A-GATE + 아래 항목을 모두 통과해야 큐에 쓴다)
+0. **A-GATE**
+   - A1–A5 전부 PASS여야 한다.
+   - B/C이면 이후 게이트를 평가하지 않고 기각한다.
 1. **연구 가치 / 정보이득**
    - 해결하려는 미해결 가설 또는 병목이 명확해야 한다.
    - 후보가 기존 입력·표현·모델과 비교해 어떤 새로운 정보를 제공하는지 명시해야 한다.
@@ -155,6 +219,7 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을
    - 성공 결과와 실패 결과 각각이 후속 큐에 어떤 다른 결정을 만들지 사전에 적어야 한다.
    - 성공해도 실패해도 연구 방향이 전혀 달라지지 않는 실험은 우선순위를 낮춘다.
    - 예상 MSE 개선률은 필수 항목도, hard gate도 아니다.
+   - 정보이득은 A-GATE 통과 후보끼리의 순위를 정하는 데만 쓴다. 정보이득만으로 B/C 후보를 승격시키지 않는다.
    - 오라클 headroom과 오차 질량은 `어디에 문제가 있는가`를 정하는 근거로는 사용하지만, 이를 임의의 회수율과 곱해 후보를 통과·탈락시키지 않는다.
    - 다른 메커니즘의 과거 실패는 이 후보의 반증이 아니다. 예: E0609의 기존 입력 기반 보정 실패는 새 정보원 후보를 반증하지 않는다.
 2. INCREMENT는 **단일 변경**이어야 한다. 같은 행에 변경 두 개를 섞지 않는다. COMBINE은 이미 측정된 변경끼리만 섞는다.
@@ -163,7 +228,8 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을
 5. **중복 없음.** 시트 두 탭의 Parent/가설/intervention/target/representation과 메커니즘이 달라야 한다. 이름만 다른 같은 메커니즘은 탈락이다.
 6. **병목과의 직접성 또는 탐색적 독립성**
    - exploitation 후보는 현재 병목을 직접 줄일 근거가 있어야 한다.
-   - exploration 후보는 현재 research basin과 충분히 다른 정보원·표현·예측대상·물리상태·architecture 중 하나를 시험해야 한다.
+   - exploration 후보도 새로운 propagation/arrival information을 포함해야 한다.
+   - 표현·예측대상·architecture만 다른 것은 exploration으로 인정하지 않는다.
    - 단순히 모델 이름이나 threshold만 바꾼 것은 exploration으로 인정하지 않는다.
 7. **휴리스틱 금지.** `references/heuristics.md`의 자가 점검 3문항을 통과해야 한다. 사람이 값을 정한 lag·rolling 창·임계값·공간 분할(strip·sector)·수동 스칼라 요약·리드/구간 경계·멤버 선택·고정 가중·analog K/lookback/거리·origin grid를 새로 넣거나 기존 값을 바꾸는 후보는 탈락이다. 표준 물리량은 문헌 정의를 인용하면 허용한다. 결과를 행의 `[휴리스틱 검사]`에 적는다.
 
@@ -175,16 +241,18 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을
 - 단독 판정: E0472 계열의 예측·잔차를 입력으로 쓰거나 E0472 계열과 블렌딩·앙상블하지 않는다. 데이터 로더와 인과 특징 빌더 재사용은 허용한다.
 
 ### 7. 큐 반영
-- 게이트를 통과한 후보를 우선순위 순으로 **최대 4건** `태양풍 큐`에 추가한다. 4번째 자리는 ARCH-STEP 전용이다. ARCH-STEP이 없으면 최대 3건이다.
-- **0건으로 끝내지 않는다.** 통과 후보가 없으면 가장 가까운 후보들을 `정보이득 / 병목 직접성 / 물리적 근거 / 비중복성 / 구현 가능성`으로 비교한 표를 보인다. 표에는 탈락 게이트와 통과에 필요한 근거도 넣는다. 그다음 근거를 보강할 수 있는 후보부터 4·5단계를 다시 돌린다(literature 추가 검색, 수학·물리 모델 보강).
-- 근거를 보강한 뒤에도 확정 후보가 없으면, **현재 가장 큰 연구 불확실성을 판별할 수 있는 1건**을 `[모드] LOW-CONFIDENCE`로 추가한다.
-- LOW-CONFIDENCE 선정 시 예상 MSE 개선률을 만들거나 요구하지 않는다.
+- A-GATE와 나머지 게이트를 통과한 A등급 예측 후보를 우선순위 순으로 **최대 4건** `태양풍 큐`에 추가한다. 4번째 자리는 ARCH-STEP 전용이다. ARCH-STEP이 없으면 최대 3건이다.
+- **0건으로 끝내지 않는다.** A등급 예측 후보가 없으면 B/C 예측 실험을 추가하지 말고 `0건 방지 — 해결 작업 fallback`에 따라 최소 1건의 ENABLE-DATA / ENABLE-PHYSICS / INFO-TEST / DATA-DISCOVERY 행을 추가한다.
+- 해결 작업은 반드시 이름이 정해진 목표 A급 실험 또는 현재 가장 큰 phase/propagation 불확실성과 연결되어야 한다.
+- LOW-CONFIDENCE는 A-GATE를 우회하는 예측 실험 모드로 사용하지 않는다.
   - 열은 `ID`, `항목`, `사양·지시`, `갱신 시각`이다.
   - ID 형식: `solar-<모드소문자>-<짧은이름>-YYYYMMDD`. 예: `solar-inc-cmeeta-20261014`.
   - `사양·지시`는 `references/row-template.md` 양식을 그대로 채운다.
 - **동시 실행 방지.** 큐에 쓰기 직전에 `태양풍 큐`를 다시 읽는다. 그 사이 다른 실행이 같은 ID, 같은 대상의 REPLICATE, 같은 계보 행을 추가했으면 그 후보는 쓰지 않는다. 활성 ARCH 계보 수도 다시 센다.
 - **행 추가 방식.** 반드시 시트 끝에 append(values.append, INSERT_ROWS)로 추가한다. 행 번호를 계산해 특정 행에 덮어쓰지 않는다. 다른 세션이 같은 시각에 행을 추가하고 있을 수 있다. 추가 후 탭을 다시 읽어, 내 ID가 있는지와 바로 앞뒤 행의 ID가 추가 전과 같은지 확인한다. 다른 행을 덮어썼으면 그 행을 원래 내용으로 복구하고 사용자에게 알린다.
 - 기존 행은 수정·삭제하지 않는다.
+- 예측 행을 쓰기 직전 `[A-GATE]` 섹션의 A1–A5가 모두 PASS인지 다시 확인한다. 하나라도 FAIL이면 append하지 않는다.
+- 해결 작업은 `[해결 작업 게이트]`의 목표 A급 실험·blocker·완료 조건·성공/실패 후속 행동이 모두 채워졌는지 확인한다.
 - REPLICATE 행은 6단계 게이트 대상이 아니다. 1.5단계 H2로만 판단한다. 최대 행 수에는 REPLICATE도 포함된다.
 - 마지막에 사용자에게 다음을 보여 준다: 1.5단계 진단 표와 방향 3줄, 추가한 행 요약 표(ID, 모드, 기준, 변경, 근거 종류, 겨냥 가설, 정보이득/결정 효과, 휴리스틱 검사), 기각한 후보와 사유, 검토 논문 표.
 
