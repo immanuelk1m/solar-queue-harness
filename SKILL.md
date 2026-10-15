@@ -5,7 +5,7 @@ description: 태양풍 72시간 속도 예측 연구(sunrun)의 다음 실험을
 
 # solar-queue-harness
 
-**버전: v6.3 (2026-10-15).** 실행 결과의 첫 줄에 `solar-queue-harness v6.2`를 출력한다. 원본은 https://github.com/immanuelk1m/solar-queue-harness (main)이다. 업로드된 사본과 내용이 다르면 GitHub 원본을 따른다.
+**버전: v6.3 (2026-10-15).** 실행 결과의 첫 줄에 `solar-queue-harness v6.3`를 출력한다. 원본은 https://github.com/immanuelk1m/solar-queue-harness (main)이다. 업로드된 사본과 내용이 다르면 GitHub 원본을 따른다.
 
 로컬 워커는 이 스킬이 `태양풍 큐`에 쓴 행 하나를 받는다. 그 행을 사양 그대로 구현해 리더보드 전체 구간에서 평가한다. 행의 `사양·지시` 칸이 곧 워커의 작업 지시다. 그래서 행 품질이 실험 품질을 결정한다.
 
@@ -153,7 +153,7 @@ A등급 예측 실험이 0건이면 B/C 실험을 억지로 넣지 말고 다음
   - H1·H5 발동 → A-GATE를 통과하는 구조 전환(PIVOT) 후보를 우선 찾는다. 없으면 해결 작업 fallback으로 전환한다.
   - H3 발동 → 해당 재료의 COMBINE은 쓰지 않는다.
   - H6 발동 → 모든 행이 고속 셀·shock 창을 겨냥한다.
-  - **활성 ARCH 계보마다 ARCH-STEP 1건**을 REPLICATE 다음 순위로 낸다. 계보의 다음 단계 변경 하나다. 종료 규칙에 걸린 계보는 내지 않는다.
+  - 활성 ARCH 계보도 다음 단계가 A-GATE를 통과할 때만 ARCH-STEP을 낸다. 같은 입력의 architecture-only 다음 단계라면 더 진행하지 않고 해결 작업 fallback 또는 다른 A급 후보로 전환한다.
   - H8 발동 → architecture-only 새 계보는 열지 않는다. A-GATE를 통과하는 새 propagation/arrival 정보가 포함된 ARCH만 허용한다. 동시 활성 계보는 최대 2개다. **큐에 대기 중인 `solar-arch-*-s1` 행도 활성으로 센다.** 이미 2개면 새 ARCH를 내지 않는다.
   - ARCH 후보는 과거 계보 표(N1–N5)와 같은 구조 계열이면 새 계보로 내지 않는다. 종료 계보 재개 조건(evidence.md)을 충족할 때만 그 계보의 다음 단계로 낸다.
 - 기본은 **A-GATE를 통과한 INCREMENT/PIVOT**다. 확정 챔피언 레시피에 단일 변경 1개를 얹는다.
