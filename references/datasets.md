@@ -27,9 +27,9 @@
 
 | ID | 데이터셋 | 기간 | 로컬 경로 | 인과 규칙 | 사용처·결과 | 비고 |
 |---|---|---|---|---|---|---|
-| SW-030 | STEREO-A beacon HI1 | 2024-01-01 ~ 현재 | `~/sunrun/nrt-collect/data/stereo_a/raw/hi_1/` | available_at 증빙 없음 → 보수적 지연 상수 필요; fetched_at은 과거 공개 시각 아님 | 아직 없음 | 2026-10-14 사용자 지정. 2024 이후 947일치. #55 HI는 실시간 track 0건으로 닫힘 |
-| SW-031 | STEREO-A beacon HI2 | 2024-01-01 ~ 현재 | `~/sunrun/nrt-collect/data/stereo_a/raw/hi_2/` | SW-030과 같음 | 아직 없음 | 2024 이후 1017일치 |
-| SW-032 | ISEE IPS (STEL) | 2024-01-01 ~ 현재 | `~/sunrun/nrt-collect/data/ips/raw/stel/` | 관측별 공개 시각 없음 → 보수적 지연 상수 필요 | 아직 없음 | #58-1(E0598)에서 공개 시각 부재로 닫힘. 2010년 파일부터 공개 |
+| SW-030 | STEREO-A beacon HI1 | 2024-01-01 ~ 현재 | `~/sunrun/nrt-collect/data/stereo_a/raw/hi_1/` | available_at = DATE-END + 1h (2026-10-15 실측 기준; fetched_at은 과거 공개 시각 아님) | 아직 없음 | 2026-10-14 사용자 지정. 2024 이후 947일치. #55 HI는 실시간 track 0건으로 닫힘 |
+| SW-031 | STEREO-A beacon HI2 | 2024-01-01 ~ 현재 | `~/sunrun/nrt-collect/data/stereo_a/raw/hi_2/` | available_at = DATE-END + 1h (2026-10-15 실측 기준) | 아직 없음 | 2024 이후 1017일치 |
+| SW-032 | ISEE IPS (STEL) | 2024-01-01 ~ 현재 | `~/sunrun/nrt-collect/data/ips/raw/stel/` | available_at = 관측 이후 처음 오는 18:00 UT (STEL 파일 매일 약 17:20 UT 재생성, 2026-10-15 실측 기준) | 아직 없음 | #58-1(E0598)에서 공개 시각 부재로 닫힘. 2010년 파일부터 공개 |
 
 ## 평가했지만 미채택 (같은 데이터로 새 행을 낼 때는 이 결과를 근거로 적는다)
 
@@ -117,9 +117,9 @@ SolarWind DB의 `입수지연` 열(O열)과 같다. 실측은 수집 기록의 H
 | SW-027 | CCMC CME Scoreboard | 실측 중앙 17.4h (p90 2.4일, n=412, CMEs since 2026-06, submissionTime−CME 시각) / 규칙 submissionTime≤origin |
 | SW-028 | SOHO LASCO C2 512px | 실측 중앙 48분 (p90 4.4h, n=1,786, last 60 days, Last-Modified−프레임 시각) / 규칙 Last-Modified(약 관측+1h) |
 | SW-029 | CACTus LASCO CME 카탈로그 | live 페이지 6시간 주기 / 월간 카탈로그는 다음 달 초 발행 |
-| SW-030 | STEREO-A beacon HI1 | 실측 중앙 20분 (p90 25분, n=23, live fetches since 2026-10-14, Last-Modified−DATE-OBS) / 규칙 미정 (E1337은 DATE-END+2h 사용, 과거 공개 시각 증빙 없음) |
-| SW-031 | STEREO-A beacon HI2 | 실측 중앙 29분 (p90 31분, n=21, live fetches since 2026-10-14, Last-Modified−DATE-OBS) / 규칙 미정 (E1337은 DATE-END+2h 사용) |
-| SW-032 | ISEE IPS (STEL) | 실측 약 9.2h (파일 버전 n=4, 마지막 관측→파일 갱신); 파일은 매일 약 02:20 UT 재생성되어 관측별 최대 약 1일 대기 / 규칙 없음 (보수적 상수 필요) |
+| SW-030 | STEREO-A beacon HI1 | 실측 중앙 20분 (p90 25분, n=23, live fetches since 2026-10-14, Last-Modified−DATE-OBS) / 규칙 DATE-END+1h (2026-10-15 실측 p90의 약 2배) |
+| SW-031 | STEREO-A beacon HI2 | 실측 중앙 29분 (p90 31분, n=21, live fetches since 2026-10-14, Last-Modified−DATE-OBS) / 규칙 DATE-END+1h (2026-10-15 실측 p90의 약 2배) |
+| SW-032 | ISEE IPS (STEL) | 실측: 파일이 매일 약 17:20 UT에 재생성(10-13 17:20, 10-14 17:16), 관측은 20:00~09:00 UT라 관측→입수 약 8~22h (마지막 관측 기준 중앙 9.2h) / 규칙 관측 시각 이후 처음 오는 18:00 UT |
 | SW-033 | PUNCH QAM J-map | 실측 중앙 36.0h (p90 2.9일, n=170, 2026-09..10, Last-Modified−관측); 2026-06 초기분은 07-28 일괄 공개(수 주) / 규칙 max(FITS DATE, Last-Modified, DATE-END+1h) |
 | SW-034 | SWPC Solar & Geophysical Event Reports (Type II/III/IV) | 실측 NGDC 아카이브 일 끝+2.2일 (n=123, 2026-06~09), 실시간 텍스트는 수 분 / 규칙 보고서 생성 시각 |
 | SW-035 | GOES-18 XRS | 규칙 측정+10분 (운영 1분 자료). NCEI 연 파일은 일 단위 갱신(실측 약 1일) |
