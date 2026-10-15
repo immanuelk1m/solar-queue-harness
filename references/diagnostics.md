@@ -64,8 +64,18 @@ def diag(df, base_id, base_seeds, N=30):
 - 계보는 특정 E id로 하드코딩하지 않고 현재 시트의 parent/base 관계와 구조 계열로 계산한다.
 - 활성 ARCH 계보 수 a를 센다.
 - p ≥ 0.8이고 H1 또는 H5가 발동했고 a < 2이면 발동한다.
-- 조치: ARCH 1건으로 새 계보를 연다.
+- 조치: architecture-only ARCH를 자동 생성하지 않는다. H8은 현재 모델 basin 포화를 뜻할 뿐 새 architecture가 새 정보를 만든다는 증거가 아니다.
+- 새 ARCH는 SKILL.md A-GATE A1–A5를 별도로 통과해야 한다. 같은 causal X에서 decoder/backbone/loss/generative formulation만 바꾸는 ARCH는 B급으로 기각한다.
+- A-GATE를 통과하는 ARCH가 없으면 ENABLE-DATA / ENABLE-PHYSICS / INFO-TEST / DATA-DISCOVERY 해결 작업 fallback으로 전환한다.
 - 과거 E0472/E1022 사례는 historical example일 뿐 현재 판정 입력으로 사용하지 않는다.
+
+## 진단 신호와 A-GATE의 우선순위
+H1–H8은 후보 탐색 방향을 바꾸는 신호다. 어떤 H 신호도 A-GATE를 우회하지 못한다.
+
+- H1/H5 → 같은 유형의 국소 변경을 중단하고 새 propagation/arrival source/state를 우선 탐색한다.
+- H6 → 고속 셀·shock 창과 연결되는 A급 source/state만 우선한다.
+- H8 → architecture-only pivot 대신 새 propagation/arrival 정보가 있는 구조를 찾는다.
+- 적합한 A급 예측 후보가 없으면 B/C 예측 실험을 만들지 않고 해결 작업 fallback을 낸다.
 
 ## ARCH 계보 규칙
 - 계보 = 같은 `lineage=<계보>`를 가진 `solar-arch-<계보>-s<N>` 행들이다. 단계마다 직전 단계 코드를 이어 받아 한 가지를 바꾼다(s1은 최소 동작 구조).
