@@ -80,7 +80,7 @@
 - 시트 `태양풍 연구`/`태양풍 큐`에서 가장 가까운 기존 행 2–3개의 ID와, 메커니즘이 어떻게 다른지.
 ```
 
-## 결과 기록 줄 (모든 모드 공통 — 워커가 결과 칸 첫 줄에 쓴다)
+## 결과 기록 줄 (예측 모드 공통 — INCREMENT/COMBINE/PIVOT/ARCH/ARCH-STEP, 워커가 결과 칸 첫 줄에 쓴다)
 `LB| E=<id> base=<base id> seeds=<s0,s1,s2> mse=<a/b/c> mean=<m> d_base=<값,%> cells=<llh/lhh/hlh/hhh> type=<특징 블록 추가|후처리·잔차|하이퍼파라미터|예측 대상 변경|구조·학습 단위|새 정보원|replicate|arch>`
 ARCH·ARCH-STEP 행은 같은 줄 끝에 `lineage=<계보> stage=<N> d_prev=<직전 단계 대비 값,%>`를 붙이고, `base`에는 비교 대상인 확정 챔피언 E id를 쓴다.
 사양 끝에 "결과 칸 첫 줄에 위 `LB|` 줄을 쓴다"를 적는다.
