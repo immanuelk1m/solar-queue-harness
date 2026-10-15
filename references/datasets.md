@@ -1,192 +1,361 @@
 # 데이터셋 manifest (태양풍)
 
-원본은 Google Sheet [SolarWind DB](https://docs.google.com/spreadsheets/d/1KWgNQPlajHWw7FLUMz3lr4rO2z7sxuxXGstD0-YjAw4/edit) 탭 `데이터셋 manifest`다. 이 파일은 그 시트의 미러다(2026-10-14 기준). 시트를 열 수 있으면 시트를 우선한다.
+원본은 Google Sheet [SolarWind DB](https://docs.google.com/spreadsheets/d/1KWgNQPlajHWw7FLUMz3lr4rO2z7sxuxXGstD0-YjAw4/edit)다. 탭 `데이터셋 manifest`에는 **사용자가 수집을 요청한 원천**만 있고, 각 원천에서 나온 파생 데이터셋·파생 피처는 원천별 피처 탭에 있다. 이 파일은 그 시트의 미러다(2026-10-15 정리).
 
 쓰는 법:
-- 기간의 끝은 2026-10-15 기준 로컬 사본(수집기·v1·v2 중 최신)의 실제 마지막 관측·origin 시각이다(`data-v2/end_dates.py`).
-- 후보 행이 쓰는 데이터는 아래 표의 ID(SW-xxx)와 로컬 경로로 지정한다. 표에 없는 새 source는 `references/contract.md`의 허용 규칙과 인과 규칙을 따른다.
-- 인과(가용 시각) 규칙 칸을 그대로 지킨다. 규칙이 비어 있거나 "증빙 없음"이면 행에 보수적 지연 상수를 적는다.
-- "평가했지만 미채택" 데이터로 다시 행을 낼 때는 그 lb 점수를 근거로 적고, 무엇이 달라지는지 밝힌다.
-- lb 점수는 시트 `태양풍 연구`에서 뽑은 seed 평균 근사치다. 판단은 매 실행 시트 원본으로 다시 확인한다.
+- 쓸 수 있는 데이터는 이 파일의 원천(manifest)과 그 피처 탭에 적힌 파생 항목뿐이다. 행에서 데이터를 지정할 때 SW ID와 로컬 경로를 쓴다.
+- 인과(가용 시각) 규칙 칸을 그대로 지킨다. 규칙이 비어 있으면 행에 보수적 지연 상수를 적는다.
+- 피처 탭의 `사용 상태`가 `챔피언 사용`이면 현재 작업 챔피언(E1149)이 쓰는 열이고, `실험 이력`이면 평가했으나 채택하지 않은 항목이다. 다시 행을 낼 때는 그 E id와 판정을 근거로 적고 무엇이 달라지는지 밝힌다.
+- 2026-10-15에 시트에서 삭제된 데이터셋(ACE K1/L2, strahl, CCMC Scoreboard, CACTus, PUNCH, SWPC event reports, GOES XRS/SEP, HMI SHARP, NMDB, GFZ/OMNI/Dst)은 쓸 수 없다.
 
-## 사용 중 (챔피언 계열 입력과 원천)
+> 주석: CCMC CME Scoreboard(SW-027)는 시트에서 빠졌지만 진행 중인 행 `solar-pivot-cmesbcons72-20261015`가 끝날 때까지 파일을 남겨 둔다. 새 행의 입력으로는 쓰지 않는다.
 
-| ID | 데이터셋 | 기간 | 로컬 경로 | 인과 규칙 | 사용처·결과 | 비고 |
-|---|---|---|---|---|---|---|
-| SW-001 | ACE 실시간 hourly (수집기 원본) | 2000-08-01 ~ 2026-10-14 23:00 UTC (수집기 DB) | `Postgres spaceweather.solar, ~/spaceweather-collector/data, gdrive:spaceweather/solar.csv` | 관측 시각 + 2h ≤ origin (ACE-LATENCY:20261012) | 모든 ACE 입력의 원천 |  |
-| SW-002 | ACE hourly stage (sun-db) | 2022-08-22 ~ 2026-10-14 23:00 UTC (sun-db stage) | `~/.local/state/sundb/stage/ace_solar/` | 관측 + 2h | alfven72, alphahe72 MAG, mambats, aceturb72 |  |
-| SW-003 | ACE frozen snapshot | 2022-08-22 ~ 2026-10-14 22:00 UTC (v2) | `~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/` | 관측 + 2h | E0472/E1022 레시피(e0472_ablation_hpo/recipe.py allowed_paths) |  |
-| SW-004 | ACE 결측 보간 속도 (학습 타깃·입력) | 2022-08-23 ~ 2026-10-14 20:00 UTC (v2) | `~/sunrun/leaderboard/store/ch-v1/ace.parquet` | 관측 + 2h; 2026-06-01 이후 타깃은 채점에 쓰지 않음 | E0472/E1022/E1198 입력·타깃 |  |
-| SW-005 | Coronal hole (CH) hourly | 2022-08-22 ~ 2026-10-01 15:00 UTC (v1) | `~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet (+masks/)` | SUVI proxy 규칙 | E0472/E1022/E1198 CH 그룹 (ablation +251 MSE) |  |
-| SW-006 | SUVI Fe195 경도 strip | 2022-08-22 ~ 2026-10-14 11:00 UTC (v2) | `~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet` | S3 LastModified ≤ origin, 로컬 바이트 = S3, obs_end ≤ origin−1h | E0472/E1022/E1198 strip (ablation +135) |  |
-| SW-007 | SUVI hourly 메타데이터 | 2022-08-22 ~ 2026-10-15 00:00 UTC (sun-db stage) | `~/.local/state/sundb/stage/suvi_hourly/` | SUVI proxy 규칙 | E0472 레시피 allowed_paths |  |
-| SW-008 | GOES-18 SUVI L1b Fe195 원본 | 2022-08-22 ~ 2026-10-15 00:00 UTC (SUVI DB) | `~/sunrun/sun-img/data/g18/, solar_g18.duckdb` | SUVI proxy 규칙 | CH·strip·euvwave·dim·chmorph·DINOv3/V-JEPA 원천 |  |
-| SW-009 | DONKI WSA-Enlil 아카이브 | 2022-07 ~ 2026-10-12 13:31 UTC (v2) | `~/sunrun/leaderboard/store/headroom-audit/donki/` | modelCompletionTime ≤ origin | E0472/E1022/E1198 ENLIL 특징 (~2026-05) |  |
-| SW-010 | DONKI WSA-Enlil live | 2026-06 ~ 2026-10-12 13:31 UTC (v2) | `~/sunrun/leaderboard/store/donki-live/` | modelCompletionTime ≤ origin | E0472/E1022/E1198 (2026-06~), srmag72 |  |
+## 원천 (탭 `데이터셋 manifest`)
 
-## 수집 중 (새 데이터, 아직 실험에 쓰지 않음)
+| ID | 데이터셋 | 분류 | 제공처 | URL·API | 시작 | 끝 | 해상도 | 로컬 경로 | 갱신 | 인과(가용 시각) 규칙 | 입수지연 | 상태 | 비고 | 피처 탭 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| SW-001 | ACE 실시간 hourly (수집기 원본) | L1 in-situ | NOAA SWPC | https://sohoftp.nascom.nasa.gov/sdb/ace/monthly/ (+/daily/) | 2000-08-01 | 2026-10-14 23:00 UTC (수집기 DB) | 1h | Postgres spaceweather.solar, ~/spaceweather-collector/data, gdrive:spaceweather/solar.csv | 10분 | 관측 시각 + 2h ≤ origin (ACE-LATENCY:20261012) | 실측: daily list가 일 끝+11분에 생성(n=499, 2025-06~2026-10), 실시간 2-hour list는 2~3분 / 규칙 관측+2h | 사용 중 |  | ACE |
+| SW-008 | GOES-18 SUVI L1b Fe195 원본 | EUV 영상 | NOAA GOES-18 (AWS S3) | s3://noaa-goes18/SUVI-L1b-Fe195/ | 2022-08-22 | 2026-10-15 00:00 UTC (SUVI DB) | 시간당 1장 | ~/sunrun/sun-img/data/g18/, solar_g18.duckdb | 1시간 | SUVI proxy 규칙 | 실측 중앙 1분 (p90 1분, n=1,429, last 60 days, S3 LastModified−obs_end) / 규칙 obs_end+1h 및 S3 LastModified≤origin | 사용 중 |  | SUVI Fe195 |
+| SW-039 | SUVI Fe171 | EUV 영상 | NOAA GOES-18 (AWS S3) | s3://noaa-goes18/SUVI-L1b-Fe171/ | 2022-08-22 | 2026-10-15 00:00 UTC (SUVI Fe171 DB) | 1h | ~/sunrun/sun-img/solar_g18_fe171.duckdb, ~/sunrun/leaderboard/store/fe171-cache/ | 중지 | SUVI proxy 규칙 | 실측 중앙 1분 (p90 1분, n=1,429, last 60 days, S3 LastModified−obs_end) / 규칙 SUVI proxy(obs_end+1h) | 평가 후 미채택 |  | SUVI Fe171 |
+| SW-009 | DONKI WSA-Enlil 아카이브 | 모델 | NASA CCMC DONKI | https://api.nasa.gov/DONKI/WSAEnlilSimulations | 2022-07 | 2026-10-12 13:31 UTC (v2) | 실행 단위 | ~/sunrun/leaderboard/store/headroom-audit/donki/ | 고정 | modelCompletionTime ≤ origin | 실측 중앙 5.8h (p90 15.6h, n=399, 2026-06..09, modelCompletionTime−입력 CME 시작) / 규칙 modelCompletionTime≤origin | 사용 중 (챔피언 입력) |  | DONKI |
+| SW-010 | DONKI WSA-Enlil live | 모델 | NASA CCMC DONKI | https://api.nasa.gov/DONKI/WSAEnlilSimulations | 2026-06 | 2026-10-12 13:31 UTC (v2) | 실행 단위 | ~/sunrun/leaderboard/store/donki-live/ | 고정 | modelCompletionTime ≤ origin | 실측 중앙 5.8h (p90 15.6h, n=399, 2026-06..09, modelCompletionTime−입력 CME 시작) / 규칙 modelCompletionTime≤origin | 사용 중 (챔피언 입력) |  | DONKI |
+| SW-025 | DONKI CME·CMEAnalysis·IPS·HSS | CME·이벤트 카탈로그 | NASA CCMC DONKI | https://api.nasa.gov/DONKI/ | 2022-07 | 2026-10-12 20:53 UTC (v2) | 이벤트 | ~/sunrun/leaderboard/store/donki-cme/ | 고정 | submissionTime ≤ origin, isMostAccurate 안 씀 | 실측 CMEAnalysis 중앙 3.3h (p90 11.0h, n=244, time21_5 기준), CME 기록 중앙 7.0h (p90 4.4일, n=564, startTime 기준), 2026-06~09 / 규칙 submissionTime≤origin | 평가 후 미채택 | CME-PRECOND72 개선(미채택), STACK4(E1269, 실행 중)에 포함 | DONKI |
+| SW-012 | GONG mrzqs 자기장 지도 | 자기장 | NSO GONG | https://gong.nso.edu/data/magmap/QR/zqs/ | 2022-10-01 | 2026-10-14 18:04 UTC (v2) | 6시간 (00:14/06:14/12:14/18:14 UTC 지도) | ~/sunrun/leaderboard/store/v2/gong-mrzqs/ (maps/, inventory/) | 6시간 (data-v2 raw) | max(관측 + 2h, HTTP Last-Modified) ≤ origin | 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) | 수집 중 (v2) | 7,429개 파일, 상류 결측 16일. v1 원본 FITS(2022-10~2026-05)는 삭제됨. 파생 피처는 GONG 탭 | GONG |
+| SW-030 | STEREO-A beacon HI1 | 헬리오스피어 영상 | NASA STEREO SSC | https://stereo-ssc.nascom.nasa.gov/data/beacon/ahead/secchi/img/hi_1/ | 2024-01-01 | 2026-10-14 19:17 UTC (nrt-collect) | 하루 약 8장 | ~/sunrun/nrt-collect/data/stereo_a/raw/hi_1/ | 15분 | available_at = DATE-END + 1h (2026-10-15 실측 기준: Last-Modified−DATE-OBS 중앙 20분, p90 25분) | 실측 중앙 20분 (p90 25분, n=23, live fetches since 2026-10-14, Last-Modified−DATE-OBS) / 규칙 DATE-END+1h (2026-10-15 실측 p90의 약 2배) | 수집 중 | 2026-10-14 사용자 지정. 2024 이후 947일치, backfill 2026-10-14 완료. #55 HI는 실시간 track 0건으로 닫힘 | STEREO-A HI |
+| SW-031 | STEREO-A beacon HI2 | 헬리오스피어 영상 | NASA STEREO SSC | https://stereo-ssc.nascom.nasa.gov/data/beacon/ahead/secchi/img/hi_2/ | 2024-01-01 | 2026-10-14 19:46 UTC (nrt-collect) | 하루 약 8장 | ~/sunrun/nrt-collect/data/stereo_a/raw/hi_2/ | 15분 | available_at = DATE-END + 1h (2026-10-15 실측 기준: 중앙 29분, p90 31분) | 실측 중앙 29분 (p90 31분, n=21, live fetches since 2026-10-14, Last-Modified−DATE-OBS) / 규칙 DATE-END+1h (2026-10-15 실측 p90의 약 2배) | 수집 중 | 2024 이후 1017일치. backfill 2026-10-14 19:05 완료 | STEREO-A HI |
+| SW-032 | ISEE IPS (STEL) | IPS | Nagoya Univ. ISEE | https://stsw1.isee.nagoya-u.ac.jp/vlist/STEL{YYYY}.dat | 2024-01-01 | 2026-10-14 07:54 UTC (nrt-collect) | 관측 단위 (하루 수십 건) | ~/sunrun/nrt-collect/data/ips/raw/stel/ | 15분 | available_at = 관측 시각 이후 처음 오는 18:00 UT (STEL 파일 매일 약 17:20 UT 재생성 + 40분 여유, 2026-10-15 실측 기준) | 실측: 파일이 매일 약 17:20 UT에 재생성(10-13 17:20, 10-14 17:16), 관측은 20:00~09:00 UT라 관측→입수 약 8~22h (마지막 관측 기준 중앙 9.2h) / 규칙 관측 시각 이후 처음 오는 18:00 UT | 수집 중 | #58-1(E0598)에서 공개 시각 부재로 닫힘. 2010년 파일부터 공개 | ISEE IPS |
+| SW-042 | SWPC Forecast Discussion | 예보 텍스트 | NOAA SWPC | https://www.ngdc.noaa.gov/stp/space-weather/swpc-products/daily_reports/discussion/ | 2024-03-01 | 2026-10-13 12:30 UTC (v2) | 발행별 | ~/sunrun/leaderboard/store/swpc-discussion76/ | 6시간 | 발행 시각 <= origin | 실측 발행 즉시 (NGDC Last-Modified−발행 1분, n=109) / 규칙 발행 시각≤origin | 기존 수집본 | v2 상태는 S:W 열 참조 | SWPC Discussion |
+| SW-028 | SOHO LASCO C2 512px | 코로나그래프 | NASA/ESA SOHO | https://soho.nascom.nasa.gov/data/REPROCESSING/Completed/ | 2022-09-30 | 2026-10-13 21:00 UTC (v2) | 약 12분 | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/ | 고정 | realtime 증거 기록 | 실측 중앙 48분 (p90 4.4h, n=1,786, last 60 days, Last-Modified−프레임 시각) / 규칙 Last-Modified(약 관측+1h) | 평가 후 미채택 |  | LASCO C2 |
 
-| ID | 데이터셋 | 기간 | 로컬 경로 | 인과 규칙 | 사용처·결과 | 비고 |
-|---|---|---|---|---|---|---|
-| SW-030 | STEREO-A beacon HI1 | 2024-01-01 ~ 2026-10-14 19:17 UTC (nrt-collect) | `~/sunrun/nrt-collect/data/stereo_a/raw/hi_1/` | available_at = DATE-END + 1h (2026-10-15 실측 기준; fetched_at은 과거 공개 시각 아님) | 아직 없음 | 2026-10-14 사용자 지정. 2024 이후 947일치. #55 HI는 실시간 track 0건으로 닫힘 |
-| SW-031 | STEREO-A beacon HI2 | 2024-01-01 ~ 2026-10-14 19:46 UTC (nrt-collect) | `~/sunrun/nrt-collect/data/stereo_a/raw/hi_2/` | available_at = DATE-END + 1h (2026-10-15 실측 기준) | 아직 없음 | 2024 이후 1017일치 |
-| SW-032 | ISEE IPS (STEL) | 2024-01-01 ~ 2026-10-14 07:54 UTC (nrt-collect) | `~/sunrun/nrt-collect/data/ips/raw/stel/` | available_at = 관측 이후 처음 오는 18:00 UT (STEL 파일 매일 약 17:20 UT 재생성, 2026-10-15 실측 기준) | 아직 없음 | #58-1(E0598)에서 공개 시각 부재로 닫힘. 2010년 파일부터 공개 |
+## 피처 탭
 
-## 평가했지만 미채택 (같은 데이터로 새 행을 낼 때는 이 결과를 근거로 적는다)
+### ACE
 
-| ID | 데이터셋 | 기간 | 로컬 경로 | 인과 규칙 | 사용처·결과 | 비고 |
-|---|---|---|---|---|---|---|
-| SW-011 | GONG polar-cap 특징 | 2022-10-01 ~ 2026-10-14 11:14 UTC (v2) | `~/sunrun/leaderboard/store/solar-inc-gongpolar72-20261014-cache/` | max(관측 + 2h, HTTP Last-Modified) | E1198 = E1022 + GONG polar (3366.5) | 6-seed 재현(E1224/E1225) 실패. STACK4(E1269, 실행 중)에 포함 |
-| SW-013 | ACE K1 SWEPAM alpha/He | 2022-09-01 ~ 2026-10-08 23:59 UTC (v2) | `~/sunrun/leaderboard/store/alphahe72-cache/` | K1 244h 지연; MAG 관측 + 2h | alphahe72 (3394.3) | 부분 개선 |
-| SW-016 | ACE 파생 캐시 (alfven/aceturb/mambats/L72/tapfnx) | 2022-08 ~ 2026-10-14 12:00 UTC (v2) | `~/sunrun/leaderboard/store/<이름>-cache` | 관측 + 2h | alfven 3417.2, aceturb72 3406.1, L72-COND 3383.2, MambaTS 5247, TAPFN 5991 | L72-COND 개선(미채택), aceturb 재현 실패. 둘 다 STACK4(E1269, 실행 중)에 포함 |
-| SW-017 | ACE SWEPAM strahl 272 eV | - ~ 2017-07-25 (ACE SWEPAM L3 strahl 원천 종료; 실험 피처는 모두 결측) | `~/sunrun/leaderboard/store/solar-inc-strahl72-20261014/` | 관측 + 2h | strahl72 3391.3 (재현 3424.4) |  |
-| SW-018 | GONG-OCB72 PFSS 위상 | 2022-10 ~ 2026-09-30 23:00 UTC (v1) | `~/sunrun/leaderboard/store/solar-inc-gongocb72-20261014-cache (+r2~r7)` | max(관측 + 2h, Last-Modified) | 3405.3 | 판정: 해당 없음 |
-| SW-019 | PFSS connectivity | 2022-10 ~ 2026-09 | `~/sunrun/leaderboard/store/pfssconn-cache/` | SW-011과 같음 | 3742.5 |  |
-| SW-020 | PFSS-WSA 직접 | - ~ - | `~/sunrun/leaderboard/store/solar-inc-pfss-wsa-20261014-cache/` | SW-011과 같음 | 4024.3 | 실패 |
-| SW-021 | CME-HCS72 | - ~ - | `~/sunrun/leaderboard/store/cmehcs72-hcs-cache/` | SW-011과 같음 | 3450.1 |  |
-| SW-022 | CH unipolarity / 자기장 집중도 | - ~ - | `~/sunrun/leaderboard/store/solar-inc-chunip72-20261014-cache, solar-inc-chmagconc72-20261014-cache` | SW-011 + SUVI proxy | 3372.8 / 3385.7 |  |
-| SW-023 | CME-chip | - ~ - | `~/sunrun/leaderboard/store/cmechip72-cache/` | SW-011 + SUVI proxy | 3444.9 |  |
-| SW-024 | NOAA SWPC WSA-Enlil ambient 아카이브 | 2023-04-04 ~ 2026-09-22 | `~/sunrun/leaderboard/store/solar-inc-ambsw72-20261014/, ~/sunrun/leaderboard/store/enlil79-step1/` | init + 12h 또는 HTTP Last-Modified | ambsw72 3421.0 | 부분 개선 |
-| SW-025 | DONKI CME·CMEAnalysis·IPS·HSS | 2022-07 ~ 2026-10-12 20:53 UTC (v2) | `~/sunrun/leaderboard/store/donki-cme/` | submissionTime ≤ origin, isMostAccurate 안 씀 | CME-PRECOND72 3405.5, cme-fd-huxt72 실행 중 | CME-PRECOND72 개선(미채택), STACK4(E1269, 실행 중)에 포함 |
-| SW-026 | ENLIL revision 궤적 | - ~ 2026-10-12 13:31 UTC (원천 SW-009 v2 기준) | `SW-009/010 파생` | modelCompletionTime | enlilrev72 E1277 |  |
-| SW-027 | CCMC CME Scoreboard | 2022-10-01 ~ 2026-10-12 05:09 UTC (v2) | `~/sunrun/leaderboard/store/cmesb72/` | submissionTime ≤ origin | cmesb72 3527.5 | 결론 없음 |
-| SW-028 | SOHO LASCO C2 512px | 2022-09-30 ~ 2026-10-13 21:00 UTC (v2) | `~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/` | realtime 증거 기록 | lascovision 3413.0, lascomassdrag E1270 |  |
-| SW-029 | CACTus LASCO CME 카탈로그 | 2022-10 ~ 2026-10-13 11:24 UTC (v2) | `~/sunrun/leaderboard/store/solar-inc-cactuskin-20261014/` | snapshot vintage | 3483.1 |  |
-| SW-033 | PUNCH QAM J-map | 2026-07-23 ~ 2026-10-13 04:32 UTC (v2) | `~/sunrun/leaderboard/store/punch-jmap72-cache/ (+latency-proxy-cache)` | max(FITS DATE, Last-Modified, DATE-END + 1h) | 3406.7 | 부분 개선 |
-| SW-034 | SWPC Solar & Geophysical Event Reports (Type II/III/IV) | 2022-09-01 ~ 2026-10-13 23:59 UTC (v2) | `~/sunrun/leaderboard/store/typeii72_20261014/, solar-inc-typeiiie72-20261014/, solar-inc-typeiv72-20261014/` | 보고서 생성 시각 | Type II 3561.3, III 3423.7, IV 3416.5 |  |
-| SW-035 | GOES-18 XRS | 2022 ~ 2026-10-12 23:59 UTC (v1) | `~/sunrun/leaderboard/store/goes-xrs72-20261014/` | 측정 + 10분 | 3408.7 |  |
-| SW-036 | GOES-18 MPS-HI SEP | 2022-09-24 ~ 2026-10-13 23:59 UTC (v2) | `~/sunrun/leaderboard/store/goes-sep72-20261014/` | manifest 기준 | 3487.8 |  |
-| SW-037 | SDO/HMI SHARP NRT | 2024-12-24 ~ 2026-10-14 10:36 UTC (v2) | `~/sunrun/leaderboard/store/solar-inc-srmag72-20261014/` | T_REC + 4h ≤ origin | 3397.7 |  |
-| SW-038 | NMDB 중성자 모니터 | 2022-09-24 ~ 2026-10-14 11:00 UTC (v2) | `~/sunrun/leaderboard/store/nmdb-anis72-cache/` | 시간 bin 종료 + 지연 | NMDB-ANIS72 3594.3, E0625 3547 |  |
-| SW-039 | SUVI Fe171 | 2022-08-22 ~ 2026-10-15 00:00 UTC (SUVI Fe171 DB) | `~/sunrun/sun-img/solar_g18_fe171.duckdb, ~/sunrun/leaderboard/store/fe171-cache/` | SUVI proxy 규칙 | directive #26, 신경망 E0449/E0451/E0479/E0484 |  |
-| SW-040 | SUVI 파생 (EUV wave, dimming, CH 형태, CH mask) | 2022-08 ~ 2026-10-14 12:00 UTC (v2) | `~/sunrun/leaderboard/store/euvwave72, suvi-dim72-cache, chmorph72, chmask-cache` | SUVI proxy 규칙 | 3406.0 / 3421.6 / 3493.5 |  |
-| SW-041 | 영상 임베딩 (DINOv3, V-JEPA) | 2022-11-22 ~ 2026-05-31 23:00 UTC (v1) | `~/sunrun/leaderboard/store/dinov3-cache, vjepa-frozen-fusion, vjepa-120h-fusion` | SUVI proxy 규칙 | E0055~58 실패 |  |
-| SW-042 | SWPC Forecast Discussion | 2024-03-01 ~ 2026-10-13 12:30 UTC (v2) | `~/sunrun/leaderboard/store/swpc-discussion76/` | 발행 시각 | directive #76 | 시트 LB 행 없음 |
-| SW-058 | GONG multi-feature (gongmulti72) |  ~ 2026-09-30 23:14 UTC (v1 실험 창); 원천 GONG v2는 SW-012 | `~/.local/state/research-dispatch/runs/solar/solar-inc-gongmulti72-20261014-*` | SW-011과 같음 | solar-inc-gongmulti72-20261014 |  |
+| 피처/항목 | 종류 | 파생 ID | 설명 | 계산 | 단위 | 인과 규칙 | 로컬 경로 | 사용 상태 | 코드 근거 |
+|---|---|---|---|---|---|---|---|---|---|
+| ACE hourly stage (sun-db) | 파생 데이터셋 | SW-002 | NOAA SWPC (SW-001 사본) | 해상도 1h; 기간 2022-08-22 ~ 2026-10-14 23:00 UTC (sun-db stage); 갱신 10분 |  | 관측 + 2h | ~/.local/state/sundb/stage/ace_solar/ | 사용 중 |  |
+| ACE frozen snapshot | 파생 데이터셋 | SW-003 | SW-002 고정 사본 | 해상도 1h; 기간 2022-08-22 ~ 2026-10-14 22:00 UTC (v2); 갱신 고정 |  | 관측 + 2h | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 사용 중 (챔피언 입력) |  |
+| ACE 결측 보간 속도 (학습 타깃·입력) | 파생 데이터셋 | SW-004 | ACE SWEPAM 파생 | 해상도 1h; 기간 2022-08-23 ~ 2026-10-14 20:00 UTC (v2); 갱신 고정 |  | 관측 + 2h; 2026-06-01 이후 타깃은 채점에 쓰지 않음 | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 사용 중 (챔피언 입력) |  |
+| ACE 파생 캐시 (alfven/aceturb/mambats/L72/tapfnx) | 파생 데이터셋 | SW-016 | SW-002/003 파생; L72-COND 개선(미채택), aceturb 재현 실패. 둘 다 STACK4(E1269, 실행 중)에 포함 | 해상도 1h; 기간 2022-08 ~ 2026-10-14 12:00 UTC (v2); 갱신 - |  | 관측 + 2h | ~/sunrun/leaderboard/store/<이름>-cache | 평가 후 미채택 |  |
+| ACE daily list 공개 시각 | 증거 | SW-015 | NOAA SWPC | 해상도 1h; 기간 2025-06-01 ~ 2026-10-13 23:59 UTC (수집기); 갱신 중지 |  | 2h 규칙 근거 | ~/spaceweather-collector/data/ace_release | 증거만 |  |
+| h | 파생 피처 | - | 예측 리드 시간(1~72) | 행 단위 리드 | h | - | - | 챔피언 사용 (E1149) | experiments/d147_e0421_lean (E0472 계열), experiments/datav2/recipe.py |
+| v_lag0 | 파생 피처 | SW-004 | 0시간 전 태양풍 속도 | filled_speed_kms.shift(0) (origin 기준, 관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py speed_features |
+| v_lag1 | 파생 피처 | SW-004 | 1시간 전 태양풍 속도 | filled_speed_kms.shift(1) (origin 기준, 관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py speed_features |
+| v_lag3 | 파생 피처 | SW-004 | 3시간 전 태양풍 속도 | filled_speed_kms.shift(3) (origin 기준, 관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py speed_features |
+| v_lag6 | 파생 피처 | SW-004 | 6시간 전 태양풍 속도 | filled_speed_kms.shift(6) (origin 기준, 관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py speed_features |
+| v_lag12 | 파생 피처 | SW-004 | 12시간 전 태양풍 속도 | filled_speed_kms.shift(12) (origin 기준, 관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py speed_features |
+| v_lag24 | 파생 피처 | SW-004 | 24시간 전 태양풍 속도 | filled_speed_kms.shift(24) (origin 기준, 관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py speed_features |
+| v_lag48 | 파생 피처 | SW-004 | 48시간 전 태양풍 속도 | filled_speed_kms.shift(48) (origin 기준, 관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py speed_features |
+| v_lag72 | 파생 피처 | SW-004 | 72시간 전 태양풍 속도 | filled_speed_kms.shift(72) (origin 기준, 관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py speed_features |
+| v_lag120 | 파생 피처 | SW-004 | 120시간 전 태양풍 속도 | filled_speed_kms.shift(120) (origin 기준, 관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py speed_features |
+| v_m6 | 파생 피처 | SW-004 | 최근 6시간 속도 평균 | filled_speed_kms.rolling(6).mean() (origin 기준, 관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py speed_features |
+| v_sd6 | 파생 피처 | SW-004 | 최근 6시간 속도 표준편차 | filled_speed_kms.rolling(6).std() (origin 기준, 관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py speed_features |
+| v_m24 | 파생 피처 | SW-004 | 최근 24시간 속도 평균 | filled_speed_kms.rolling(24).mean() (origin 기준, 관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py speed_features |
+| v_sd24 | 파생 피처 | SW-004 | 최근 24시간 속도 표준편차 | filled_speed_kms.rolling(24).std() (origin 기준, 관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py speed_features |
+| v_m72 | 파생 피처 | SW-004 | 최근 72시간 속도 평균 | filled_speed_kms.rolling(72).mean() (origin 기준, 관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py speed_features |
+| v_sd72 | 파생 피처 | SW-004 | 최근 72시간 속도 표준편차 | filled_speed_kms.rolling(72).std() (origin 기준, 관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py speed_features |
+| rec26 | 파생 피처 | SW-004 | 목표 시각보다 26일 전 속도 (자전 재현) | speed(target_t − 26d) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py base_grid_for |
+| rec27 | 파생 피처 | SW-004 | 목표 시각보다 27일 전 속도 (자전 재현) | speed(target_t − 27d) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py base_grid_for |
+| rec28 | 파생 피처 | SW-004 | 목표 시각보다 28일 전 속도 (자전 재현) | speed(target_t − 28d) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py base_grid_for |
+| rec_mean | 파생 피처 | SW-004 | 26·27·28일 전 같은 시각 속도 평균 (27일 자전 재현) | mean(rec26, rec27, rec28) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-v1/ace.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py base_grid_for |
+| ace_speed_kms_last | 파생 피처 | SW-003 | SWEPAM 속도 최근값 (6시간까지 앞값 채움) | ace_speed_kms.ffill(limit=6) (관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_speed_kms_m6 | 파생 피처 | SW-003 | SWEPAM 속도 6시간 평균 | ace_speed_kms.rolling(6).mean() (관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_speed_kms_m24 | 파생 피처 | SW-003 | SWEPAM 속도 24시간 평균 | ace_speed_kms.rolling(24).mean() (관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_density_cm3_last | 파생 피처 | SW-003 | SWEPAM 밀도 최근값 (6시간까지 앞값 채움) | ace_density_cm3.ffill(limit=6) (관측 +2h 이동) | cm⁻³ | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_density_cm3_m6 | 파생 피처 | SW-003 | SWEPAM 밀도 6시간 평균 | ace_density_cm3.rolling(6).mean() (관측 +2h 이동) | cm⁻³ | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_density_cm3_m24 | 파생 피처 | SW-003 | SWEPAM 밀도 24시간 평균 | ace_density_cm3.rolling(24).mean() (관측 +2h 이동) | cm⁻³ | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_temperature_k_last | 파생 피처 | SW-003 | SWEPAM 온도 최근값 (6시간까지 앞값 채움) | ace_temperature_k.ffill(limit=6) (관측 +2h 이동) | K | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_temperature_k_m6 | 파생 피처 | SW-003 | SWEPAM 온도 6시간 평균 | ace_temperature_k.rolling(6).mean() (관측 +2h 이동) | K | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_temperature_k_m24 | 파생 피처 | SW-003 | SWEPAM 온도 24시간 평균 | ace_temperature_k.rolling(24).mean() (관측 +2h 이동) | K | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_bt_nt_last | 파생 피처 | SW-003 | MAG \|B\| 최근값 (6시간까지 앞값 채움) | ace_bt_nt.ffill(limit=6) (관측 +2h 이동) | nT | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_bt_nt_m6 | 파생 피처 | SW-003 | MAG \|B\| 6시간 평균 | ace_bt_nt.rolling(6).mean() (관측 +2h 이동) | nT | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_bt_nt_m24 | 파생 피처 | SW-003 | MAG \|B\| 24시간 평균 | ace_bt_nt.rolling(24).mean() (관측 +2h 이동) | nT | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_bz_gsm_nt_last | 파생 피처 | SW-003 | MAG Bz (GSM) 최근값 (6시간까지 앞값 채움) | ace_bz_gsm_nt.ffill(limit=6) (관측 +2h 이동) | nT | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_bz_gsm_nt_m6 | 파생 피처 | SW-003 | MAG Bz (GSM) 6시간 평균 | ace_bz_gsm_nt.rolling(6).mean() (관측 +2h 이동) | nT | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_bz_gsm_nt_m24 | 파생 피처 | SW-003 | MAG Bz (GSM) 24시간 평균 | ace_bz_gsm_nt.rolling(24).mean() (관측 +2h 이동) | nT | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_by_gsm_nt_last | 파생 피처 | SW-003 | MAG By (GSM) 최근값 (6시간까지 앞값 채움) | ace_by_gsm_nt.ffill(limit=6) (관측 +2h 이동) | nT | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_by_gsm_nt_m6 | 파생 피처 | SW-003 | MAG By (GSM) 6시간 평균 | ace_by_gsm_nt.rolling(6).mean() (관측 +2h 이동) | nT | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_by_gsm_nt_m24 | 파생 피처 | SW-003 | MAG By (GSM) 24시간 평균 | ace_by_gsm_nt.rolling(24).mean() (관측 +2h 이동) | nT | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_epam_e_channel1_last | 파생 피처 | SW-003 | EPAM 전자 ch1 최근값 (6시간까지 앞값 채움) | log10(clip ≥1e-3) 후 ace_epam_e_channel1.ffill(limit=6) (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_epam_e_channel1_m6 | 파생 피처 | SW-003 | EPAM 전자 ch1 6시간 평균 | log10(clip ≥1e-3) 후 ace_epam_e_channel1.rolling(6).mean() (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_epam_e_channel1_m24 | 파생 피처 | SW-003 | EPAM 전자 ch1 24시간 평균 | log10(clip ≥1e-3) 후 ace_epam_e_channel1.rolling(24).mean() (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_epam_e_channel2_last | 파생 피처 | SW-003 | EPAM 전자 ch2 최근값 (6시간까지 앞값 채움) | log10(clip ≥1e-3) 후 ace_epam_e_channel2.ffill(limit=6) (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_epam_e_channel2_m6 | 파생 피처 | SW-003 | EPAM 전자 ch2 6시간 평균 | log10(clip ≥1e-3) 후 ace_epam_e_channel2.rolling(6).mean() (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_epam_e_channel2_m24 | 파생 피처 | SW-003 | EPAM 전자 ch2 24시간 평균 | log10(clip ≥1e-3) 후 ace_epam_e_channel2.rolling(24).mean() (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_epam_p_channel1_last | 파생 피처 | SW-003 | EPAM 양성자 ch1 최근값 (6시간까지 앞값 채움) | log10(clip ≥1e-3) 후 ace_epam_p_channel1.ffill(limit=6) (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_epam_p_channel1_m6 | 파생 피처 | SW-003 | EPAM 양성자 ch1 6시간 평균 | log10(clip ≥1e-3) 후 ace_epam_p_channel1.rolling(6).mean() (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_epam_p_channel1_m24 | 파생 피처 | SW-003 | EPAM 양성자 ch1 24시간 평균 | log10(clip ≥1e-3) 후 ace_epam_p_channel1.rolling(24).mean() (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_epam_p_channel3_last | 파생 피처 | SW-003 | EPAM 양성자 ch3 최근값 (6시간까지 앞값 채움) | log10(clip ≥1e-3) 후 ace_epam_p_channel3.ffill(limit=6) (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_epam_p_channel3_m6 | 파생 피처 | SW-003 | EPAM 양성자 ch3 6시간 평균 | log10(clip ≥1e-3) 후 ace_epam_p_channel3.rolling(6).mean() (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_epam_p_channel3_m24 | 파생 피처 | SW-003 | EPAM 양성자 ch3 24시간 평균 | log10(clip ≥1e-3) 후 ace_epam_p_channel3.rolling(24).mean() (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_epam_p_channel5_last | 파생 피처 | SW-003 | EPAM 양성자 ch5 최근값 (6시간까지 앞값 채움) | log10(clip ≥1e-3) 후 ace_epam_p_channel5.ffill(limit=6) (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_epam_p_channel5_m6 | 파생 피처 | SW-003 | EPAM 양성자 ch5 6시간 평균 | log10(clip ≥1e-3) 후 ace_epam_p_channel5.rolling(6).mean() (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_epam_p_channel5_m24 | 파생 피처 | SW-003 | EPAM 양성자 ch5 24시간 평균 | log10(clip ≥1e-3) 후 ace_epam_p_channel5.rolling(24).mean() (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_sis_gt10_flux_last | 파생 피처 | SW-003 | SIS >10 MeV 양성자 최근값 (6시간까지 앞값 채움) | log10(clip ≥1e-3) 후 ace_sis_gt10_flux.ffill(limit=6) (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_sis_gt10_flux_m6 | 파생 피처 | SW-003 | SIS >10 MeV 양성자 6시간 평균 | log10(clip ≥1e-3) 후 ace_sis_gt10_flux.rolling(6).mean() (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| ace_sis_gt10_flux_m24 | 파생 피처 | SW-003 | SIS >10 MeV 양성자 24시간 평균 | log10(clip ≥1e-3) 후 ace_sis_gt10_flux.rolling(24).mean() (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| speed_d24 | 파생 피처 | SW-003 | 6시간 평균 속도의 24시간 변화 | ace_speed_kms_m6 − shift(24) (관측 +2h 이동) | km/s | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| epam_p1_d6 | 파생 피처 | SW-003 | EPAM 양성자 ch1 6시간 평균의 6시간 변화 | ace_epam_p_channel1_m6 − shift(6) (관측 +2h 이동) | log10 flux | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/ch-breakthrough-v2/upload/raw-ace-snapshot/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py ace_features |
+| level72_hat | 파생 피처 | SW-016 | L72-COND: 다음 72시간 평균 속도 수준 예측을 조건 입력으로 추가 | train-only median 대치 + StandardScaler + Ridge(α=1); 표적 = 관측 72h 창 평균(≥54h 관측) | km/s | 관측 + 2h ≤ origin, 72h 성숙 후 학습 | ~/sunrun/leaderboard/store/l72cond-s345-cache/ | 챔피언 사용 (E1149, 재현 E1271 부분 개선) | experiments/gjc_inc_l72cond_20261014 |
+| sigma_c_1h | 파생 피처 | SW-016 | Alfvénicity 상태 (교차 헬리시티 σc, 잔여 에너지 σr, v–B 상관 등) | ACE 1분/1시간 v·B 창 통계 | 무차원 | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/alfven/ | 실험 이력 E1205 미개선 | experiments/solar_inc_alfven72_20261014 |
+| sigma_c_3h | 파생 피처 | SW-016 | Alfvénicity 상태 (교차 헬리시티 σc, 잔여 에너지 σr, v–B 상관 등) | ACE 1분/1시간 v·B 창 통계 | 무차원 | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/alfven/ | 실험 이력 E1205 미개선 | experiments/solar_inc_alfven72_20261014 |
+| sigma_c_6h | 파생 피처 | SW-016 | Alfvénicity 상태 (교차 헬리시티 σc, 잔여 에너지 σr, v–B 상관 등) | ACE 1분/1시간 v·B 창 통계 | 무차원 | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/alfven/ | 실험 이력 E1205 미개선 | experiments/solar_inc_alfven72_20261014 |
+| sigma_r_1h | 파생 피처 | SW-016 | Alfvénicity 상태 (교차 헬리시티 σc, 잔여 에너지 σr, v–B 상관 등) | ACE 1분/1시간 v·B 창 통계 | 무차원 | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/alfven/ | 실험 이력 E1205 미개선 | experiments/solar_inc_alfven72_20261014 |
+| sigma_r_3h | 파생 피처 | SW-016 | Alfvénicity 상태 (교차 헬리시티 σc, 잔여 에너지 σr, v–B 상관 등) | ACE 1분/1시간 v·B 창 통계 | 무차원 | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/alfven/ | 실험 이력 E1205 미개선 | experiments/solar_inc_alfven72_20261014 |
+| sigma_r_6h | 파생 피처 | SW-016 | Alfvénicity 상태 (교차 헬리시티 σc, 잔여 에너지 σr, v–B 상관 등) | ACE 1분/1시간 v·B 창 통계 | 무차원 | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/alfven/ | 실험 이력 E1205 미개선 | experiments/solar_inc_alfven72_20261014 |
+| alfven_ratio_1h | 파생 피처 | SW-016 | Alfvénicity 상태 (교차 헬리시티 σc, 잔여 에너지 σr, v–B 상관 등) | ACE 1분/1시간 v·B 창 통계 | 무차원 | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/alfven/ | 실험 이력 E1205 미개선 | experiments/solar_inc_alfven72_20261014 |
+| alfven_ratio_3h | 파생 피처 | SW-016 | Alfvénicity 상태 (교차 헬리시티 σc, 잔여 에너지 σr, v–B 상관 등) | ACE 1분/1시간 v·B 창 통계 | 무차원 | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/alfven/ | 실험 이력 E1205 미개선 | experiments/solar_inc_alfven72_20261014 |
+| alfven_ratio_6h | 파생 피처 | SW-016 | Alfvénicity 상태 (교차 헬리시티 σc, 잔여 에너지 σr, v–B 상관 등) | ACE 1분/1시간 v·B 창 통계 | 무차원 | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/alfven/ | 실험 이력 E1205 미개선 | experiments/solar_inc_alfven72_20261014 |
+| vb_corr_3h | 파생 피처 | SW-016 | Alfvénicity 상태 (교차 헬리시티 σc, 잔여 에너지 σr, v–B 상관 등) | ACE 1분/1시간 v·B 창 통계 | 무차원 | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/alfven/ | 실험 이력 E1205 미개선 | experiments/solar_inc_alfven72_20261014 |
+| vb_corr_6h | 파생 피처 | SW-016 | Alfvénicity 상태 (교차 헬리시티 σc, 잔여 에너지 σr, v–B 상관 등) | ACE 1분/1시간 v·B 창 통계 | 무차원 | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/alfven/ | 실험 이력 E1205 미개선 | experiments/solar_inc_alfven72_20261014 |
+| alfven_mach_median_6h | 파생 피처 | SW-016 | Alfvénicity 상태 (교차 헬리시티 σc, 잔여 에너지 σr, v–B 상관 등) | ACE 1분/1시간 v·B 창 통계 | 무차원 | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/alfven/ | 실험 이력 E1205 미개선 | experiments/solar_inc_alfven72_20261014 |
+| valid_fraction | 파생 피처 | SW-016 | Alfvénicity 상태 (교차 헬리시티 σc, 잔여 에너지 σr, v–B 상관 등) | ACE 1분/1시간 v·B 창 통계 | 무차원 | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/alfven/ | 실험 이력 E1205 미개선 | experiments/solar_inc_alfven72_20261014 |
+| alfven_missing | 파생 피처 | SW-016 | Alfvénicity 상태 (교차 헬리시티 σc, 잔여 에너지 σr, v–B 상관 등) | ACE 1분/1시간 v·B 창 통계 | 무차원 | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/alfven/ | 실험 이력 E1205 미개선 | experiments/solar_inc_alfven72_20261014 |
+| ace_turb_power_b_1h | 파생 피처 | SW-016 | ACE 난류 power·변동계수 (B, V, n, 동압) | ACE 창별 변동 power | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/aceturb/ | 실험 이력 E1192 부분 개선, 재현 E1238 미개선; STACK4 포함 | experiments/solar_inc_aceturb72_20261014 |
+| ace_turb_power_b_3h | 파생 피처 | SW-016 | ACE 난류 power·변동계수 (B, V, n, 동압) | ACE 창별 변동 power | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/aceturb/ | 실험 이력 E1192 부분 개선, 재현 E1238 미개선; STACK4 포함 | experiments/solar_inc_aceturb72_20261014 |
+| ace_turb_power_b_6h | 파생 피처 | SW-016 | ACE 난류 power·변동계수 (B, V, n, 동압) | ACE 창별 변동 power | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/aceturb/ | 실험 이력 E1192 부분 개선, 재현 E1238 미개선; STACK4 포함 | experiments/solar_inc_aceturb72_20261014 |
+| ace_turb_power_v_1h | 파생 피처 | SW-016 | ACE 난류 power·변동계수 (B, V, n, 동압) | ACE 창별 변동 power | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/aceturb/ | 실험 이력 E1192 부분 개선, 재현 E1238 미개선; STACK4 포함 | experiments/solar_inc_aceturb72_20261014 |
+| ace_turb_power_v_3h | 파생 피처 | SW-016 | ACE 난류 power·변동계수 (B, V, n, 동압) | ACE 창별 변동 power | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/aceturb/ | 실험 이력 E1192 부분 개선, 재현 E1238 미개선; STACK4 포함 | experiments/solar_inc_aceturb72_20261014 |
+| ace_turb_power_v_6h | 파생 피처 | SW-016 | ACE 난류 power·변동계수 (B, V, n, 동압) | ACE 창별 변동 power | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/aceturb/ | 실험 이력 E1192 부분 개선, 재현 E1238 미개선; STACK4 포함 | experiments/solar_inc_aceturb72_20261014 |
+| ace_turb_power_n_1h | 파생 피처 | SW-016 | ACE 난류 power·변동계수 (B, V, n, 동압) | ACE 창별 변동 power | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/aceturb/ | 실험 이력 E1192 부분 개선, 재현 E1238 미개선; STACK4 포함 | experiments/solar_inc_aceturb72_20261014 |
+| ace_turb_power_n_3h | 파생 피처 | SW-016 | ACE 난류 power·변동계수 (B, V, n, 동압) | ACE 창별 변동 power | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/aceturb/ | 실험 이력 E1192 부분 개선, 재현 E1238 미개선; STACK4 포함 | experiments/solar_inc_aceturb72_20261014 |
+| ace_turb_power_n_6h | 파생 피처 | SW-016 | ACE 난류 power·변동계수 (B, V, n, 동압) | ACE 창별 변동 power | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/aceturb/ | 실험 이력 E1192 부분 개선, 재현 E1238 미개선; STACK4 포함 | experiments/solar_inc_aceturb72_20261014 |
+| ace_turb_cv_b_6h | 파생 피처 | SW-016 | ACE 난류 power·변동계수 (B, V, n, 동압) | ACE 창별 변동 power | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/aceturb/ | 실험 이력 E1192 부분 개선, 재현 E1238 미개선; STACK4 포함 | experiments/solar_inc_aceturb72_20261014 |
+| ace_turb_cv_v_6h | 파생 피처 | SW-016 | ACE 난류 power·변동계수 (B, V, n, 동압) | ACE 창별 변동 power | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/aceturb/ | 실험 이력 E1192 부분 개선, 재현 E1238 미개선; STACK4 포함 | experiments/solar_inc_aceturb72_20261014 |
+| ace_turb_cv_n_6h | 파생 피처 | SW-016 | ACE 난류 power·변동계수 (B, V, n, 동압) | ACE 창별 변동 power | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/aceturb/ | 실험 이력 E1192 부분 개선, 재현 E1238 미개선; STACK4 포함 | experiments/solar_inc_aceturb72_20261014 |
+| ace_turb_pdyn_power_6h | 파생 피처 | SW-016 | ACE 난류 power·변동계수 (B, V, n, 동압) | ACE 창별 변동 power | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/aceturb/ | 실험 이력 E1192 부분 개선, 재현 E1238 미개선; STACK4 포함 | experiments/solar_inc_aceturb72_20261014 |
+| ace_turb_valid_fraction_6h | 파생 피처 | SW-016 | ACE 난류 power·변동계수 (B, V, n, 동압) | ACE 창별 변동 power | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/aceturb/ | 실험 이력 E1192 부분 개선, 재현 E1238 미개선; STACK4 포함 | experiments/solar_inc_aceturb72_20261014 |
+| ace_turb_missing_6h | 파생 피처 | SW-016 | ACE 난류 power·변동계수 (B, V, n, 동압) | ACE 창별 변동 power | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/aceturb/ | 실험 이력 E1192 부분 개선, 재현 E1238 미개선; STACK4 포함 | experiments/solar_inc_aceturb72_20261014 |
+| MambaTS 입력 시퀀스 (11채널) | 파생 데이터셋 | SW-016 | speed, density, temperature, Bt, By, Bz, e1, e2, p1, p3, p5 원시 720시간 시퀀스 | numeric-inputs.npz | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/v2/mambats-inputs/, mambats-s1-cache/ | 실험 이력 E1264 미개선 (ARCH) | experiments/arch_mambats |
+| TAPFN-X72 피처 캐시 | 파생 데이터셋 | SW-016 | E0472 기본 피처 113열 사본 (PFN 입력) | - | - | 관측 + 2h ≤ origin | ~/sunrun/leaderboard/store/tapfnx72-feature-cache/ | 실험 이력 E1124 미개선 |  |
 
-## 부분 사본·유휴·평가 전용
+### SUVI Fe195
 
-| ID | 데이터셋 | 기간 | 로컬 경로 | 인과 규칙 | 사용처·결과 | 비고 |
-|---|---|---|---|---|---|---|
-| SW-012 | GONG mrzqs FITS 원본 (부분) | 2026-06-01 ~ 2026-09-26 | `~/sunrun/leaderboard/store/scratch/pfssconn_20261014/gong_fits (+cmehcs72 85장)` | 관측 + 2h / Last-Modified | pfssconn, cmehcs, gongocb, chunip, cmechip | 2022-10~2026-05 bulk 3534장은 없어짐. GONG 금지는 2026-10-11 해제 |
-| SW-014 | ACE Level 2 (검증본) | 2000-08-01 ~ 2026-08-04 23:00 UTC (수집기 DB) | `~/spaceweather-collector/data/cache-l2` | L2 지연으로 인과 사용 안 함 | - |  |
-| SW-043 | 공식 리더보드 스냅샷 | 2026-06-01 ~ 2026-09-30 | `~/.cache/huggingface (expos/evaluate.py 안에서만 읽음)` | 평가 전용 | lb-eval | 선택에 쓰면 안 됨. baseline-replay.parquet도 금지 |
-| SW-057 | GONG 자기장 디코딩 캐시 | 2022-10 ~ 2026-10-14 18:04 UTC (v2) | `~/sunrun/leaderboard/store/solar-inc-chunip72-20261014-cache/source-cache/gong/` | SW-011과 같음 | chunip72 | 원본 FITS(2022-10~2026-05)가 삭제돼 남은 거의 유일한 GONG 사본(가공본). 파일별 날짜는 미확인 |
+| 피처/항목 | 종류 | 파생 ID | 설명 | 계산 | 단위 | 인과 규칙 | 로컬 경로 | 사용 상태 | 코드 근거 |
+|---|---|---|---|---|---|---|---|---|---|
+| Coronal hole (CH) hourly | 파생 데이터셋 | SW-005 | SUVI Fe195 파생 | 해상도 1h; 기간 2022-08-22 ~ 2026-10-01 15:00 UTC (v1); 갱신 고정 |  | SUVI proxy 규칙 | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet (+masks/) | 사용 중 (챔피언 입력) |  |
+| SUVI Fe195 경도 strip | 파생 데이터셋 | SW-006 | SUVI Fe195 파생 | 해상도 1h; 기간 2022-08-22 ~ 2026-10-14 11:00 UTC (v2); 갱신 고정 |  | S3 LastModified ≤ origin, 로컬 바이트 = S3, obs_end ≤ origin−1h | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 사용 중 (챔피언 입력) |  |
+| SUVI hourly 메타데이터 | 파생 데이터셋 | SW-007 | NOAA GOES-18 | 해상도 1h; 기간 2022-08-22 ~ 2026-10-15 00:00 UTC (sun-db stage); 갱신 - |  | SUVI proxy 규칙 | ~/.local/state/sundb/stage/suvi_hourly/ | 사용 중 |  |
+| SUVI 파생 (EUV wave, dimming, CH 형태, CH mask) | 파생 데이터셋 | SW-040 | SW-008 파생 | 해상도 1h; 기간 2022-08 ~ 2026-10-14 12:00 UTC (v2); 갱신 - |  | SUVI proxy 규칙 | ~/sunrun/leaderboard/store/euvwave72, suvi-dim72-cache, chmorph72, chmask-cache | 평가 후 미채택 |  |
+| 영상 임베딩 (DINOv3, V-JEPA) | 파생 데이터셋 | SW-041 | SW-008 파생 | 해상도 1~3h; 기간 2022-11-22 ~ 2026-05-31 23:00 UTC (v1); 갱신 고정 |  | SUVI proxy 규칙 | ~/sunrun/leaderboard/store/dinov3-cache, vjepa-frozen-fusion, vjepa-120h-fusion | 평가 후 미채택 |  |
+| ch_ch_t035_area | 파생 피처 | SW-005 | 전체 CH 면적 (임계 035) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t035_max_area | 파생 피처 | SW-005 | 최대 CH 면적 (임계 035) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t035_top1_area | 파생 피처 | SW-005 | 1위 CH 면적 (임계 035) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t035_top2_area | 파생 피처 | SW-005 | 2위 CH 면적 (임계 035) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t035_top3_area | 파생 피처 | SW-005 | 3위 CH 면적 (임계 035) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t035_meridian15_area | 파생 피처 | SW-005 | 중앙자오선 ±15° CH 면적 (임계 035) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t035_meridian15_equatorial_area | 파생 피처 | SW-005 | 중앙자오선 ±15°·적도대 CH 면적 (임계 035) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t035_meridian30_area | 파생 피처 | SW-005 | 중앙자오선 ±30° CH 면적 (임계 035) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t035_meridian30_equatorial_area | 파생 피처 | SW-005 | 중앙자오선 ±30°·적도대 CH 면적 (임계 035) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t035_equatorial_area | 파생 피처 | SW-005 | 적도대 CH 면적 (임계 035) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t045_area | 파생 피처 | SW-005 | 전체 CH 면적 (임계 045) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t045_max_area | 파생 피처 | SW-005 | 최대 CH 면적 (임계 045) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t045_top1_area | 파생 피처 | SW-005 | 1위 CH 면적 (임계 045) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t045_top2_area | 파생 피처 | SW-005 | 2위 CH 면적 (임계 045) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t045_top3_area | 파생 피처 | SW-005 | 3위 CH 면적 (임계 045) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t045_meridian15_area | 파생 피처 | SW-005 | 중앙자오선 ±15° CH 면적 (임계 045) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t045_meridian15_equatorial_area | 파생 피처 | SW-005 | 중앙자오선 ±15°·적도대 CH 면적 (임계 045) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t045_meridian30_area | 파생 피처 | SW-005 | 중앙자오선 ±30° CH 면적 (임계 045) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t045_meridian30_equatorial_area | 파생 피처 | SW-005 | 중앙자오선 ±30°·적도대 CH 면적 (임계 045) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t045_equatorial_area | 파생 피처 | SW-005 | 적도대 CH 면적 (임계 045) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t055_area | 파생 피처 | SW-005 | 전체 CH 면적 (임계 055) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t055_max_area | 파생 피처 | SW-005 | 최대 CH 면적 (임계 055) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t055_top1_area | 파생 피처 | SW-005 | 1위 CH 면적 (임계 055) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t055_top2_area | 파생 피처 | SW-005 | 2위 CH 면적 (임계 055) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t055_top3_area | 파생 피처 | SW-005 | 3위 CH 면적 (임계 055) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t055_meridian15_area | 파생 피처 | SW-005 | 중앙자오선 ±15° CH 면적 (임계 055) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t055_meridian15_equatorial_area | 파생 피처 | SW-005 | 중앙자오선 ±15°·적도대 CH 면적 (임계 055) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t055_meridian30_area | 파생 피처 | SW-005 | 중앙자오선 ±30° CH 면적 (임계 055) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t055_meridian30_equatorial_area | 파생 피처 | SW-005 | 중앙자오선 ±30°·적도대 CH 면적 (임계 055) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| ch_ch_t055_equatorial_area | 파생 피처 | SW-005 | 적도대 CH 면적 (임계 055) | ch-hourly.parquet 열 ffill(≤6h) + "ch_" 접두 | 원반 비율 | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/ch-v1/ch-hourly.parquet | 챔피언 사용 (E1149) | experiments/datav2/sources.py ch_features |
+| strip_v350_logmed | 파생 피처 | SW-006 | 속도 350 km/s 가정 시 목표 시각에 지구로 향할 경도 strip의 log 중앙 밝기 | λ(h,v) = 0.55°/h × (τ_v − (T − t_img)); 적도대(lat1) 15° 셀 겹침 가중 평균 | - | SUVI proxy | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 챔피언 사용 (E1149) | d1_longitude_strips/strips.py |
+| strip_v350_dark | 파생 피처 | SW-006 | 속도 350 km/s 가정 시 목표 시각에 지구로 향할 경도 strip의 어두운 화소 비율 | λ(h,v) = 0.55°/h × (τ_v − (T − t_img)); 적도대(lat1) 15° 셀 겹침 가중 평균 | - | SUVI proxy | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 챔피언 사용 (E1149) | d1_longitude_strips/strips.py |
+| strip_v350_cover | 파생 피처 | SW-006 | 속도 350 km/s 가정 시 목표 시각에 지구로 향할 경도 strip의 유효 화소 비율 | λ(h,v) = 0.55°/h × (τ_v − (T − t_img)); 적도대(lat1) 15° 셀 겹침 가중 평균 | - | SUVI proxy | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 챔피언 사용 (E1149) | d1_longitude_strips/strips.py |
+| strip_v450_logmed | 파생 피처 | SW-006 | 속도 450 km/s 가정 시 목표 시각에 지구로 향할 경도 strip의 log 중앙 밝기 | λ(h,v) = 0.55°/h × (τ_v − (T − t_img)); 적도대(lat1) 15° 셀 겹침 가중 평균 | - | SUVI proxy | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 챔피언 사용 (E1149) | d1_longitude_strips/strips.py |
+| strip_v450_dark | 파생 피처 | SW-006 | 속도 450 km/s 가정 시 목표 시각에 지구로 향할 경도 strip의 어두운 화소 비율 | λ(h,v) = 0.55°/h × (τ_v − (T − t_img)); 적도대(lat1) 15° 셀 겹침 가중 평균 | - | SUVI proxy | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 챔피언 사용 (E1149) | d1_longitude_strips/strips.py |
+| strip_v450_cover | 파생 피처 | SW-006 | 속도 450 km/s 가정 시 목표 시각에 지구로 향할 경도 strip의 유효 화소 비율 | λ(h,v) = 0.55°/h × (τ_v − (T − t_img)); 적도대(lat1) 15° 셀 겹침 가중 평균 | - | SUVI proxy | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 챔피언 사용 (E1149) | d1_longitude_strips/strips.py |
+| strip_v550_logmed | 파생 피처 | SW-006 | 속도 550 km/s 가정 시 목표 시각에 지구로 향할 경도 strip의 log 중앙 밝기 | λ(h,v) = 0.55°/h × (τ_v − (T − t_img)); 적도대(lat1) 15° 셀 겹침 가중 평균 | - | SUVI proxy | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 챔피언 사용 (E1149) | d1_longitude_strips/strips.py |
+| strip_v550_dark | 파생 피처 | SW-006 | 속도 550 km/s 가정 시 목표 시각에 지구로 향할 경도 strip의 어두운 화소 비율 | λ(h,v) = 0.55°/h × (τ_v − (T − t_img)); 적도대(lat1) 15° 셀 겹침 가중 평균 | - | SUVI proxy | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 챔피언 사용 (E1149) | d1_longitude_strips/strips.py |
+| strip_v550_cover | 파생 피처 | SW-006 | 속도 550 km/s 가정 시 목표 시각에 지구로 향할 경도 strip의 유효 화소 비율 | λ(h,v) = 0.55°/h × (τ_v − (T − t_img)); 적도대(lat1) 15° 셀 겹침 가중 평균 | - | SUVI proxy | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 챔피언 사용 (E1149) | d1_longitude_strips/strips.py |
+| strip_v650_logmed | 파생 피처 | SW-006 | 속도 650 km/s 가정 시 목표 시각에 지구로 향할 경도 strip의 log 중앙 밝기 | λ(h,v) = 0.55°/h × (τ_v − (T − t_img)); 적도대(lat1) 15° 셀 겹침 가중 평균 | - | SUVI proxy | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 챔피언 사용 (E1149) | d1_longitude_strips/strips.py |
+| strip_v650_dark | 파생 피처 | SW-006 | 속도 650 km/s 가정 시 목표 시각에 지구로 향할 경도 strip의 어두운 화소 비율 | λ(h,v) = 0.55°/h × (τ_v − (T − t_img)); 적도대(lat1) 15° 셀 겹침 가중 평균 | - | SUVI proxy | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 챔피언 사용 (E1149) | d1_longitude_strips/strips.py |
+| strip_v650_cover | 파생 피처 | SW-006 | 속도 650 km/s 가정 시 목표 시각에 지구로 향할 경도 strip의 유효 화소 비율 | λ(h,v) = 0.55°/h × (τ_v − (T − t_img)); 적도대(lat1) 15° 셀 겹침 가중 평균 | - | SUVI proxy | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 챔피언 사용 (E1149) | d1_longitude_strips/strips.py |
+| strip_v750_logmed | 파생 피처 | SW-006 | 속도 750 km/s 가정 시 목표 시각에 지구로 향할 경도 strip의 log 중앙 밝기 | λ(h,v) = 0.55°/h × (τ_v − (T − t_img)); 적도대(lat1) 15° 셀 겹침 가중 평균 | - | SUVI proxy | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 챔피언 사용 (E1149) | d1_longitude_strips/strips.py |
+| strip_v750_dark | 파생 피처 | SW-006 | 속도 750 km/s 가정 시 목표 시각에 지구로 향할 경도 strip의 어두운 화소 비율 | λ(h,v) = 0.55°/h × (τ_v − (T − t_img)); 적도대(lat1) 15° 셀 겹침 가중 평균 | - | SUVI proxy | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 챔피언 사용 (E1149) | d1_longitude_strips/strips.py |
+| strip_v750_cover | 파생 피처 | SW-006 | 속도 750 km/s 가정 시 목표 시각에 지구로 향할 경도 strip의 유효 화소 비율 | λ(h,v) = 0.55°/h × (τ_v − (T − t_img)); 적도대(lat1) 15° 셀 겹침 가중 평균 | - | SUVI proxy | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 챔피언 사용 (E1149) | d1_longitude_strips/strips.py |
+| img_age_h | 파생 피처 | SW-007 | 선택된 SUVI 영상의 나이 (origin − obs_end) | select_slots: slot ≤ O−1h, S3 LastModified ≤ O, status ok | h | SUVI proxy | ~/.local/state/sundb/stage/suvi_hourly/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py select_slots |
+| img_stale | 파생 피처 | SW-007 | 영상 나이 > 6h 또는 적격 영상 없음 플래그 | select_slots: slot ≤ O−1h, S3 LastModified ≤ O, status ok | 0/1 | SUVI proxy | ~/.local/state/sundb/stage/suvi_hourly/ | 챔피언 사용 (E1149) | experiments/datav2/sources.py select_slots |
+| dim_area_frac | 파생 피처 | SW-040 | coronal dimming: dimming 면적 비율 | SUVI Fe195 running-ratio 영상 | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/suvi-dim/ | 실험 이력 E1170 미개선 | solar-inc-suvidim72-20261014 |
+| dim_largest_frac | 파생 피처 | SW-040 | coronal dimming: 최대 dimming 영역 비율 | SUVI Fe195 running-ratio 영상 | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/suvi-dim/ | 실험 이력 E1170 미개선 | solar-inc-suvidim72-20261014 |
+| dim_mean_logratio | 파생 피처 | SW-040 | coronal dimming: 평균 log 감광비 | SUVI Fe195 running-ratio 영상 | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/suvi-dim/ | 실험 이력 E1170 미개선 | solar-inc-suvidim72-20261014 |
+| dim_p10_logratio | 파생 피처 | SW-040 | coronal dimming: 하위 10% log 감광비 | SUVI Fe195 running-ratio 영상 | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/suvi-dim/ | 실험 이력 E1170 미개선 | solar-inc-suvidim72-20261014 |
+| dim_area_slope_6h | 파생 피처 | SW-040 | coronal dimming: 6h 면적 변화율 | SUVI Fe195 running-ratio 영상 | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/suvi-dim/ | 실험 이력 E1170 미개선 | solar-inc-suvidim72-20261014 |
+| dim_depth_slope_6h | 파생 피처 | SW-040 | coronal dimming: 6h 깊이 변화율 | SUVI Fe195 running-ratio 영상 | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/suvi-dim/ | 실험 이력 E1170 미개선 | solar-inc-suvidim72-20261014 |
+| dim_n_components | 파생 피처 | SW-040 | coronal dimming: 영역 개수 | SUVI Fe195 running-ratio 영상 | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/suvi-dim/ | 실험 이력 E1170 미개선 | solar-inc-suvidim72-20261014 |
+| dim_centroid_lon | 파생 피처 | SW-040 | coronal dimming: 중심 경도 | SUVI Fe195 running-ratio 영상 | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/suvi-dim/ | 실험 이력 E1170 미개선 | solar-inc-suvidim72-20261014 |
+| dim_centroid_lat | 파생 피처 | SW-040 | coronal dimming: 중심 위도 | SUVI Fe195 running-ratio 영상 | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/suvi-dim/ | 실험 이력 E1170 미개선 | solar-inc-suvidim72-20261014 |
+| dim_east_west_balance | 파생 피처 | SW-040 | coronal dimming: 동서 균형 | SUVI Fe195 running-ratio 영상 | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/suvi-dim/ | 실험 이력 E1170 미개선 | solar-inc-suvidim72-20261014 |
+| dim_onset_age_h | 파생 피처 | SW-040 | coronal dimming: 시작 후 경과 | SUVI Fe195 running-ratio 영상 | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/suvi-dim/ | 실험 이력 E1170 미개선 | solar-inc-suvidim72-20261014 |
+| dim_peak_growth_age_h | 파생 피처 | SW-040 | coronal dimming: 최대 성장 후 경과 | SUVI Fe195 running-ratio 영상 | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/suvi-dim/ | 실험 이력 E1170 미개선 | solar-inc-suvidim72-20261014 |
+| dim_missing | 파생 피처 | SW-040 | coronal dimming: 결측 플래그 | SUVI Fe195 running-ratio 영상 | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/suvi-dim/ | 실험 이력 E1170 미개선 | solar-inc-suvidim72-20261014 |
+| wave_present | 파생 피처 | SW-040 | EUV wave: EUV wave 존재 | SUVI Fe195 ridge kinematics | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/euvwave/ | 실험 이력 E1195 미개선 | solar-inc-euvwave72-20261014 |
+| onset_age_min | 파생 피처 | SW-040 | EUV wave: 시작 후 경과(분) | SUVI Fe195 ridge kinematics | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/euvwave/ | 실험 이력 E1195 미개선 | solar-inc-euvwave72-20261014 |
+| front_speed_kms | 파생 피처 | SW-040 | EUV wave: 파면 속도 | SUVI Fe195 ridge kinematics | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/euvwave/ | 실험 이력 E1195 미개선 | solar-inc-euvwave72-20261014 |
+| front_accel_kms2 | 파생 피처 | SW-040 | EUV wave: 파면 가속 | SUVI Fe195 ridge kinematics | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/euvwave/ | 실험 이력 E1195 미개선 | solar-inc-euvwave72-20261014 |
+| speed_p90_kms | 파생 피처 | SW-040 | EUV wave: 속도 p90 | SUVI Fe195 ridge kinematics | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/euvwave/ | 실험 이력 E1195 미개선 | solar-inc-euvwave72-20261014 |
+| angular_extent_deg | 파생 피처 | SW-040 | EUV wave: 각 범위 | SUVI Fe195 ridge kinematics | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/euvwave/ | 실험 이력 E1195 미개선 | solar-inc-euvwave72-20261014 |
+| radial_span_rsun | 파생 피처 | SW-040 | EUV wave: 반경 범위 | SUVI Fe195 ridge kinematics | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/euvwave/ | 실험 이력 E1195 미개선 | solar-inc-euvwave72-20261014 |
+| front_contrast | 파생 피처 | SW-040 | EUV wave: 파면 대비 | SUVI Fe195 ridge kinematics | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/euvwave/ | 실험 이력 E1195 미개선 | solar-inc-euvwave72-20261014 |
+| ridge_coherence | 파생 피처 | SW-040 | EUV wave: ridge 일관성 | SUVI Fe195 ridge kinematics | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/euvwave/ | 실험 이력 E1195 미개선 | solar-inc-euvwave72-20261014 |
+| center_lat_deg | 파생 피처 | SW-040 | EUV wave: 중심 위도 | SUVI Fe195 ridge kinematics | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/euvwave/ | 실험 이력 E1195 미개선 | solar-inc-euvwave72-20261014 |
+| center_lon_deg | 파생 피처 | SW-040 | EUV wave: 중심 경도 | SUVI Fe195 ridge kinematics | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/euvwave/ | 실험 이력 E1195 미개선 | solar-inc-euvwave72-20261014 |
+| euvwave_missing | 파생 피처 | SW-040 | EUV wave: 결측 플래그 | SUVI Fe195 ridge kinematics | - | SUVI proxy | ~/sunrun/leaderboard/store/v2/euvwave/ | 실험 이력 E1195 미개선 | solar-inc-euvwave72-20261014 |
+| chm_lon00 … chm_lon11 (12열), chlat_lonXX_latY (36열) | 파생 피처 | SW-040 | 학습형 CH mask의 경도 셀별(·위도대별) CH 비율 | SUVI Fe195 → CH 분할 mask → 15° 셀 집계 | 비율 | SUVI proxy | ~/sunrun/leaderboard/store/v2/chmask/, chmask-cache/ | 실험 이력 (masklevel72 등) | solar_pivot_masklevel72_20261015 |
+| CH morphology 12열 | 파생 피처 | SW-040 | CH 형태(경계 길이, 조각 수 등) | SUVI Fe195 CH mask 형태 통계 | - | SUVI proxy | ~/sunrun/leaderboard/store/chmorph72 | 실험 이력 E1222 미개선 | solar-inc-chmorph72-20261014 |
+| DINOv3 / V-JEPA 임베딩 | 파생 피처 | SW-041 | frozen 영상 모델 임베딩 (patch token / clip) | SUVI Fe195 1~3h 영상 → frozen encoder | - | SUVI proxy | ~/sunrun/leaderboard/store/dinov3-cache, vjepa-frozen-fusion, vjepa-120h-fusion | 실험 이력 (E0055~58 실패, V-JEPA 미개선) |  |
+| SUVI hourly 셀 통계 (149열) | 원본 컬럼 | SW-006 | disk_* 4열 + lonXX_latY_{log_median, log_q10, dark_fraction, valid_fraction} 144열 + slot | 원천 영상 15°×3 위도대 셀 통계 | - | S3 LastModified ≤ origin, obs_end ≤ origin − 1h | ~/sunrun/leaderboard/store/suvi-fusion/suvi-hourly-v2.parquet | 챔피언 사용 (lat1 48열만 strip 계산에 사용) |  |
+| SUVI 메타데이터 26열 | 원본 컬럼 | SW-007 | slot, status, obs_start, obs_end, s3_modified, exptime, rsun, solar_b0, nc_path 등 | GOES-18 SUVI L1b 헤더 | - | SUVI proxy | ~/.local/state/sundb/stage/suvi_hourly/ | 챔피언 사용 (slot 선택) |  |
 
-## 증거만 있는 폴더 (데이터셋 아님)
+### SUVI Fe171
 
-probe 응답·샘플만 있다. 학습 데이터로 쓰지 않는다: SW-015 `~/spaceweather-collector/data/ace_release` (시간별 available_at 상한), SW-044 `~/sunrun/leaderboard/store/baron69-evidence/` (STEREO SWAVES beacon (#69 차단)), SW-045 `~/sunrun/leaderboard/store/beacon2science68-assets/` (Beacon2Science (#68)), SW-046 `~/sunrun/leaderboard/store/strudl62a-resume/` (STRUDL 코드 + HI beacon 일부 (#62a)), SW-047 `~/sunrun/leaderboard/store/turner70-evidence/` (BRaVDA/STEREO PLASTIC 샘플 (#70)), SW-048 `~/sunrun/leaderboard/store/l5l1-72-evidence/` (JPL Horizons 위치), SW-049 `~/sunrun/leaderboard/store/ips73-evidence/` (MWA·중국 IPS 목록 (#73/#74)), SW-050 `~/sunrun/leaderboard/store/coronagraph58-3-evidence/` (GOES-19 CCOR-1 샘플 (#58-3)), SW-051 `~/sunrun/leaderboard/store/solarorbiter58-4-evidence/` (Solar Orbiter LL 샘플 (#58-4)), SW-052 `~/sunrun/leaderboard/store/stoarc58_2a-evidence/` (e-CALLISTO burst list 색인 (#58-2a)), SW-053 `~/sunrun/leaderboard/store/surya67-metadata-20261011/` (SDO AIA/HMI 목록 (#67)), SW-054 `~/sunrun/leaderboard/store/punch66-metadata-20261011/` (PUNCH 메타데이터 (#66)), SW-059 `~/sunrun/leaderboard/store/strudl62a-evidence/` (STRUDL 검사 기록 (#62a)), SW-060 `~/sunrun/leaderboard/store/q117-cosa-source/` (COSA 코드 (#117)), SW-061 `~/sunrun/leaderboard/store/surf77-source/` (SURF 저장소 코드 (#77)).
+| 피처/항목 | 종류 | 파생 ID | 설명 | 계산 | 단위 | 인과 규칙 | 로컬 경로 | 사용 상태 | 코드 근거 |
+|---|---|---|---|---|---|---|---|---|---|
+| Fe171 hourly 셀 통계 (149열) | 원본 컬럼 | SW-039 | Fe195와 같은 구성: disk_* 4열 + lonXX_latY_{log_median, log_q10, dark_fraction, valid_fraction} 144열 | SUVI Fe171 영상 셀 통계 | - | SUVI proxy (obs_end + 1h) | ~/sunrun/leaderboard/store/fe171-cache/fe171-hourly-v1.parquet, store/v2/fe171/ | 실험 이력 | experiments/d146_fe171_channel/fe171_hourly.py |
+| fe171_strip_v{350..750}_{logmed,dark,cover} | 파생 피처 | SW-039 | Fe195 strip과 같은 기하의 Fe171 경도 strip (15열) | strips171.py (Fe195와 같은 λ(h,v) 공식) | - | SUVI proxy | ~/sunrun/leaderboard/store/fe171-cache/ | 실험 이력 (D146) 미채택 | experiments/d146_fe171_channel/strips171.py |
+| Fe171 영상 (SpeedNet/PROSWIN 입력) | 파생 피처 | SW-039 | 신경망 영상 분기 입력 | - | - | SUVI proxy | ~/sunrun/sun-img/solar_g18_fe171.duckdb | 실험 이력 E0463/E0479/E0483/E0484 미개선 |  |
 
-## 미수집·중단
+### DONKI
 
-- SW-055 GFZ Kp/ap/F10.7, OMNI2, Kyoto Dst: 지자기·태양 지수. 미수집.
-- SW-056 nrt-collect 중단 소스: STEREO COR2/EUVI/PLASTIC/IMPACT, CCOR-2, e-CALLISTO, Solar Orbiter LL, LASCO C2/C3 RT, SOLAR-1, UCSD tomography. 사용자 중단. 2026-10-14 사용자 결정: 연구 데이터와 겹치거나 범위 밖이라 수집 중단·삭제
+| 피처/항목 | 종류 | 파생 ID | 설명 | 계산 | 단위 | 인과 규칙 | 로컬 경로 | 사용 상태 | 코드 근거 |
+|---|---|---|---|---|---|---|---|---|---|
+| ENLIL revision 궤적 | 파생 데이터셋 | SW-026 | NASA CCMC DONKI | 해상도 -; 기간 - ~ 2026-10-12 13:31 UTC (원천 SW-009 v2 기준); 갱신 - |  | modelCompletionTime | SW-009/010 파생 | 진행 중 |  |
+| enlil_next_arr_h | 파생 피처 | SW-009, SW-010 | origin 이후 다음 예상 충격 도착까지 시간 (−6h 이후 도착 중 최소) | 최근 7일 안에 완료된 WSA-Enlil 실행만 사용 | h | modelCompletionTime ≤ origin | ~/sunrun/leaderboard/store/headroom-audit/donki/, donki-live/ | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py enlil_features |
+| enlil_since_arr_h | 파생 피처 | SW-009, SW-010 | 최근 6~96h 안에 지난 예상 도착 이후 경과 시간 | 최근 7일 안에 완료된 WSA-Enlil 실행만 사용 | h | modelCompletionTime ≤ origin | ~/sunrun/leaderboard/store/headroom-audit/donki/, donki-live/ | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py enlil_features |
+| enlil_n_pending | 파생 피처 | SW-009, SW-010 | origin 기준 아직 도착하지 않은 예상 충격 수 | 최근 7일 안에 완료된 WSA-Enlil 실행만 사용 | 개 | modelCompletionTime ≤ origin | ~/sunrun/leaderboard/store/headroom-audit/donki/, donki-live/ | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py enlil_features |
+| enlil_kp | 파생 피처 | SW-009, SW-010 | 대기 중 충격의 최대 예상 Kp (kp_90/135/180 최대) | 최근 7일 안에 완료된 WSA-Enlil 실행만 사용 | Kp | modelCompletionTime ≤ origin | ~/sunrun/leaderboard/store/headroom-audit/donki/, donki-live/ | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py enlil_features |
+| enlil_glancing | 파생 피처 | SW-009, SW-010 | 대기 중 충격이 모두 glancing blow인지 | 최근 7일 안에 완료된 WSA-Enlil 실행만 사용 | 0/1 | modelCompletionTime ≤ origin | ~/sunrun/leaderboard/store/headroom-audit/donki/, donki-live/ | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py enlil_features |
+| enlil_dt_target | 파생 피처 | SW-009, SW-010 | 리드 h − enlil_next_arr_h (목표 시각과 예상 도착의 차이) | 최근 7일 안에 완료된 WSA-Enlil 실행만 사용 | h | modelCompletionTime ≤ origin | ~/sunrun/leaderboard/store/headroom-audit/donki/, donki-live/ | 챔피언 사용 (E1149) | headroom_audit/info_ablation.py enlil_features |
+| rev_count_72h | 파생 피처 | SW-026 | 최근 72h ENLIL 재실행 수 | 같은 CME의 연속 실행 비교 | - | modelCompletionTime ≤ origin | SW-009/010 파생 | 실험 이력 E1277 판단 불가 (lb-eval 미산출) | experiments/solar_inc_enlilrev72_20261014 |
+| rev_latest_age_h | 파생 피처 | SW-026 | 최신 재실행 후 경과 | 같은 CME의 연속 실행 비교 | - | modelCompletionTime ≤ origin | SW-009/010 파생 | 실험 이력 E1277 판단 불가 (lb-eval 미산출) | experiments/solar_inc_enlilrev72_20261014 |
+| revision_missing | 파생 피처 | SW-026 | 결측 플래그 | 같은 CME의 연속 실행 비교 | - | modelCompletionTime ≤ origin | SW-009/010 파생 | 실험 이력 E1277 판단 불가 (lb-eval 미산출) | experiments/solar_inc_enlilrev72_20261014 |
+| cme_recent_event_count | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_adjacent_pair_count | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_catchup_pair_available | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_catchup_delta_v_kms | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_catchup_speed_ratio | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_catchup_tau_h | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_catchup_radius_au | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_catchup_before_1au | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_catchup_release_gap_h | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_catchup_direction_sep_deg | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_catchup_direction_available | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_catchup_angular_overlap | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_catchup_overlap_margin_deg | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_catchup_trailing_faster | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_overlap_pair_available | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_overlap_delta_v_kms | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_overlap_speed_ratio | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_overlap_speed_available | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_overlap_release_gap_h | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_overlap_direction_sep_deg | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_overlap_angular_overlap | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_overlap_margin_deg | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_overlap_trailing_faster | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_interaction_active_by_lead | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| cme_lead_minus_catch_h | 파생 피처 | SW-025 | CME 쌍 사전조건 (앞뒤 CME 추월·겹침 운동학) | CMEAnalysis 속도·방향·시각으로 계산 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/donki-cme/ | 실험 이력 E1157 개선, 재현 E1241 미채택; STACK4 포함 | experiments/gjc_inc_cmeprecond72_20261014/cme_features.py |
+| WSAEnlilSimulations JSON 필드 | 원본 컬럼 | SW-009, SW-010 | modelCompletionTime, estimatedShockArrivalTime, kp_90/135/180, isEarthGB, cmeInputs | DONKI API 원본 | - | modelCompletionTime ≤ origin | ~/sunrun/leaderboard/store/v2/donki/ | 챔피언 사용 (E1149) (위 필드만) |  |
+| CME / CMEAnalysis / IPS / HSS JSON 필드 | 원본 컬럼 | SW-025 | startTime, submissionTime, speed, latitude, longitude, halfAngle, time21_5, isMostAccurate(사용 안 함) | DONKI API 원본 | - | submissionTime ≤ origin | ~/sunrun/leaderboard/store/v2/donki/ | 실험 이력 |  |
 
-<!-- LATENCY-TABLE:START -->
-## 입수지연 (관측 → 실제 입수까지 걸리는 시간)
+### GONG
 
-SolarWind DB의 `입수지연` 열(O열)과 같다. 실측은 수집 기록의 HTTP Last-Modified·생성·제출 시각에서 잰 중앙값과 p90이고, `/` 뒤는 연구에서 쓰는 인과 규칙이다. 근거 계산은 `~/sunrun/data-v2/latency_report.py`(결과 `reports/latency-20261015.json`). 행에서 인과 지연 상수를 정할 때는 규칙값 이상, 실측 p90을 넘는 쪽을 권장한다.
+| 피처/항목 | 종류 | 파생 ID | 설명 | 계산 | 단위 | 인과 규칙 | 로컬 경로 | 사용 상태 | 코드 근거 |
+|---|---|---|---|---|---|---|---|---|---|
+| GONG polar-cap 특징 | 파생 데이터셋 | SW-011 | NSO GONG mrzqs; 6-seed 재현(E1224/E1225) 실패. STACK4(E1269, 실행 중)에 포함 | 해상도 지도 hourly; 기간 2022-10-01 ~ 2026-10-14 11:14 UTC (v2); 갱신 고정 |  | max(관측 + 2h, HTTP Last-Modified) | ~/sunrun/leaderboard/store/solar-inc-gongpolar72-20261014-cache/ | 평가 후 미채택 |  |
+| GONG-OCB72 PFSS 위상 | 파생 데이터셋 | SW-018 | GONG + PFSS (Rss 2.5); 판정: 해당 없음 | 해상도 hourly; 기간 2022-10 ~ 2026-09-30 23:00 UTC (v1); 갱신 - |  | max(관측 + 2h, Last-Modified) | ~/sunrun/leaderboard/store/solar-inc-gongocb72-20261014-cache (+r2~r7) | 평가 후 미채택 |  |
+| GONG 자기장 디코딩 캐시 | 파생 데이터셋 | SW-057 | SW-011 manifest의 GONG mrzqs 디코딩본; 원본 FITS(2022-10~2026-05)가 삭제돼 남은 거의 유일한 GONG 사본(가공본). 파일별 날짜는 미확인 | 해상도 hourly; 기간 2022-10 ~ 2026-10-14 18:04 UTC (v2); 갱신 고정 |  | SW-011과 같음 | ~/sunrun/leaderboard/store/solar-inc-chunip72-20261014-cache/source-cache/gong/ | 부분 사본만 |  |
+| GONG multi-feature | 파생 데이터셋 | SW-058 | NSO GONG; v2 상태는 S:W 열 참조 | 해상도 원본 cadence; 기간  ~ 2026-09-30 23:14 UTC (v1 실험 창); 원천 GONG v2는 SW-012; 갱신 주 1회 |  | max(관측+2h, HTTP Last-Modified) <= origin | ~/sunrun/leaderboard/store/solar-inc-gongmulti72-20261014-cache/ | 기존 연구 이력 |  |
+| north_mean_br | 파생 피처 | SW-011 | 극관(polar cap) 자기장 상태 | mrzqs 지도 극관 Br 평균·절대값 | G | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1198 개선, 재현 E1225 기각; STACK4 포함 | experiments/solar_inc_gongpolar72_20261014 |
+| south_mean_br | 파생 피처 | SW-011 | 극관(polar cap) 자기장 상태 | mrzqs 지도 극관 Br 평균·절대값 | G | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1198 개선, 재현 E1225 기각; STACK4 포함 | experiments/solar_inc_gongpolar72_20261014 |
+| north_abs_br | 파생 피처 | SW-011 | 극관(polar cap) 자기장 상태 | mrzqs 지도 극관 Br 평균·절대값 | G | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1198 개선, 재현 E1225 기각; STACK4 포함 | experiments/solar_inc_gongpolar72_20261014 |
+| south_abs_br | 파생 피처 | SW-011 | 극관(polar cap) 자기장 상태 | mrzqs 지도 극관 Br 평균·절대값 | G | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1198 개선, 재현 E1225 기각; STACK4 포함 | experiments/solar_inc_gongpolar72_20261014 |
+| polar_signed_diff | 파생 피처 | SW-011 | 극관(polar cap) 자기장 상태 | mrzqs 지도 극관 Br 평균·절대값 | G | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1198 개선, 재현 E1225 기각; STACK4 포함 | experiments/solar_inc_gongpolar72_20261014 |
+| polar_abs_sum | 파생 피처 | SW-011 | 극관(polar cap) 자기장 상태 | mrzqs 지도 극관 Br 평균·절대값 | G | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1198 개선, 재현 E1225 기각; STACK4 포함 | experiments/solar_inc_gongpolar72_20261014 |
+| polar_asymmetry | 파생 피처 | SW-011 | 극관(polar cap) 자기장 상태 | mrzqs 지도 극관 Br 평균·절대값 | G | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1198 개선, 재현 E1225 기각; STACK4 포함 | experiments/solar_inc_gongpolar72_20261014 |
+| polar_missing | 파생 피처 | SW-011 | 극관(polar cap) 자기장 상태 | mrzqs 지도 극관 Br 평균·절대값 | G | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1198 개선, 재현 E1225 기각; STACK4 포함 | experiments/solar_inc_gongpolar72_20261014 |
+| dipole_axial_l1m0 | 파생 피처 | SW-058 | 전구 저차 다중극 (쌍극·사중극·팔중극) | mrzqs 지도 구면조화 전개 l=1..3 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1283 미개선 | experiments/solar_inc_gongmulti72_20261014 |
+| dipole_equatorial_amp_l1 | 파생 피처 | SW-058 | 전구 저차 다중극 (쌍극·사중극·팔중극) | mrzqs 지도 구면조화 전개 l=1..3 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1283 미개선 | experiments/solar_inc_gongmulti72_20261014 |
+| dipole_equatorial_phase_sin | 파생 피처 | SW-058 | 전구 저차 다중극 (쌍극·사중극·팔중극) | mrzqs 지도 구면조화 전개 l=1..3 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1283 미개선 | experiments/solar_inc_gongmulti72_20261014 |
+| dipole_equatorial_phase_cos | 파생 피처 | SW-058 | 전구 저차 다중극 (쌍극·사중극·팔중극) | mrzqs 지도 구면조화 전개 l=1..3 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1283 미개선 | experiments/solar_inc_gongmulti72_20261014 |
+| quadrupole_amp_l2 | 파생 피처 | SW-058 | 전구 저차 다중극 (쌍극·사중극·팔중극) | mrzqs 지도 구면조화 전개 l=1..3 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1283 미개선 | experiments/solar_inc_gongmulti72_20261014 |
+| octupole_amp_l3 | 파생 피처 | SW-058 | 전구 저차 다중극 (쌍극·사중극·팔중극) | mrzqs 지도 구면조화 전개 l=1..3 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1283 미개선 | experiments/solar_inc_gongmulti72_20261014 |
+| dipole_tilt_deg | 파생 피처 | SW-058 | 전구 저차 다중극 (쌍극·사중극·팔중극) | mrzqs 지도 구면조화 전개 l=1..3 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1283 미개선 | experiments/solar_inc_gongmulti72_20261014 |
+| dipole_flux_norm | 파생 피처 | SW-058 | 전구 저차 다중극 (쌍극·사중극·팔중극) | mrzqs 지도 구면조화 전개 l=1..3 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1283 미개선 | experiments/solar_inc_gongmulti72_20261014 |
+| loworder_power_frac_l1_3 | 파생 피처 | SW-058 | 전구 저차 다중극 (쌍극·사중극·팔중극) | mrzqs 지도 구면조화 전개 l=1..3 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1283 미개선 | experiments/solar_inc_gongmulti72_20261014 |
+| axial_to_equatorial_ratio | 파생 피처 | SW-058 | 전구 저차 다중극 (쌍극·사중극·팔중극) | mrzqs 지도 구면조화 전개 l=1..3 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1283 미개선 | experiments/solar_inc_gongmulti72_20261014 |
+| map_age_h | 파생 피처 | SW-058 | 전구 저차 다중극 (쌍극·사중극·팔중극) | mrzqs 지도 구면조화 전개 l=1..3 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1283 미개선 | experiments/solar_inc_gongmulti72_20261014 |
+| multipole_missing | 파생 피처 | SW-058 | 전구 저차 다중극 (쌍극·사중극·팔중극) | mrzqs 지도 구면조화 전개 l=1..3 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-derived/map-features.parquet | 실험 이력 E1283 미개선 | experiments/solar_inc_gongmulti72_20261014 |
+| footpoint_ocb_dist_deg | 파생 피처 | SW-018 | 지구 연결 footpoint와 열린 자기장 경계(OCB) | PFSS (Rss 2.5) 추적 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-ocb/ | 실험 이력 E1239 해당 없음 | solar-inc-gongocb72-20261014 |
+| open_flux_frac_5deg | 파생 피처 | SW-018 | 지구 연결 footpoint와 열린 자기장 경계(OCB) | PFSS (Rss 2.5) 추적 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-ocb/ | 실험 이력 E1239 해당 없음 | solar-inc-gongocb72-20261014 |
+| open_flux_frac_10deg | 파생 피처 | SW-018 | 지구 연결 footpoint와 열린 자기장 경계(OCB) | PFSS (Rss 2.5) 추적 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-ocb/ | 실험 이력 E1239 해당 없음 | solar-inc-gongocb72-20261014 |
+| ocb_length_local | 파생 피처 | SW-018 | 지구 연결 footpoint와 열린 자기장 경계(OCB) | PFSS (Rss 2.5) 추적 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-ocb/ | 실험 이력 E1239 해당 없음 | solar-inc-gongocb72-20261014 |
+| ocb_curvature | 파생 피처 | SW-018 | 지구 연결 footpoint와 열린 자기장 경계(OCB) | PFSS (Rss 2.5) 추적 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-ocb/ | 실험 이력 E1239 해당 없음 | solar-inc-gongocb72-20261014 |
+| nearest_open_patch_area | 파생 피처 | SW-018 | 지구 연결 footpoint와 열린 자기장 경계(OCB) | PFSS (Rss 2.5) 추적 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-ocb/ | 실험 이력 E1239 해당 없음 | solar-inc-gongocb72-20261014 |
+| nearest_open_patch_width | 파생 피처 | SW-018 | 지구 연결 footpoint와 열린 자기장 경계(OCB) | PFSS (Rss 2.5) 추적 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-ocb/ | 실험 이력 E1239 해당 없음 | solar-inc-gongocb72-20261014 |
+| footpoint_expansion_factor | 파생 피처 | SW-018 | 지구 연결 footpoint와 열린 자기장 경계(OCB) | PFSS (Rss 2.5) 추적 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-ocb/ | 실험 이력 E1239 해당 없음 | solar-inc-gongocb72-20261014 |
+| footpoint_lat | 파생 피처 | SW-018 | 지구 연결 footpoint와 열린 자기장 경계(OCB) | PFSS (Rss 2.5) 추적 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-ocb/ | 실험 이력 E1239 해당 없음 | solar-inc-gongocb72-20261014 |
+| footpoint_lon | 파생 피처 | SW-018 | 지구 연결 footpoint와 열린 자기장 경계(OCB) | PFSS (Rss 2.5) 추적 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-ocb/ | 실험 이력 E1239 해당 없음 | solar-inc-gongocb72-20261014 |
+| map_age_h | 파생 피처 | SW-018 | 지구 연결 footpoint와 열린 자기장 경계(OCB) | PFSS (Rss 2.5) 추적 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-ocb/ | 실험 이력 E1239 해당 없음 | solar-inc-gongocb72-20261014 |
+| ocb_missing | 파생 피처 | SW-018 | 지구 연결 footpoint와 열린 자기장 경계(OCB) | PFSS (Rss 2.5) 추적 | - | max(관측 + 2h, Last-Modified) ≤ origin | ~/sunrun/leaderboard/store/v2/gong-ocb/ | 실험 이력 E1239 해당 없음 | solar-inc-gongocb72-20261014 |
 
-| ID | 데이터셋 | 입수지연 |
-|---|---|---|
-| SW-001 | ACE 실시간 hourly (수집기 원본) | 2000-08-01 ~ 2026-10-14 23:00 UTC (수집기 DB) |
-| SW-002 | ACE hourly stage (sun-db) | 2022-08-22 ~ 2026-10-14 23:00 UTC (sun-db stage) |
-| SW-003 | ACE frozen snapshot | 2022-08-22 ~ 2026-10-14 22:00 UTC (v2) |
-| SW-004 | ACE 결측 보간 속도 (학습 타깃·입력) | 2022-08-23 ~ 2026-10-14 20:00 UTC (v2) |
-| SW-005 | Coronal hole (CH) hourly | 원천 SW-008과 같음 (SUVI 실측 약 1분) / 규칙 SUVI proxy(obs_end+1h) |
-| SW-006 | SUVI Fe195 경도 strip | 실측 중앙 1분 (p90 1분, n=1,429, last 60 days, S3 LastModified−obs_end) / 규칙 obs_end+1h 및 S3 LastModified≤origin |
-| SW-007 | SUVI hourly 메타데이터 | 실측 중앙 1분 (p90 1분, n=1,429, last 60 days, S3 LastModified−obs_end) / 규칙 obs_end+1h 및 S3 LastModified≤origin |
-| SW-008 | GOES-18 SUVI L1b Fe195 원본 | 실측 중앙 1분 (p90 1분, n=1,429, last 60 days, S3 LastModified−obs_end) / 규칙 obs_end+1h 및 S3 LastModified≤origin |
-| SW-009 | DONKI WSA-Enlil 아카이브 | 실측 중앙 5.8h (p90 15.6h, n=399, 2026-06..09, modelCompletionTime−입력 CME 시작) / 규칙 modelCompletionTime≤origin |
-| SW-010 | DONKI WSA-Enlil live | 실측 중앙 5.8h (p90 15.6h, n=399, 2026-06..09, modelCompletionTime−입력 CME 시작) / 규칙 modelCompletionTime≤origin |
-| SW-011 | GONG polar-cap 특징 | 원천 SW-012와 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
-| SW-012 | GONG mrzqs FITS 원본 (부분) | 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
-| SW-013 | ACE K1 SWEPAM alpha/He | 실측 약 242h(아카이브 끝 vs 2026-10-14 조회) / 규칙 244h |
-| SW-014 | ACE Level 2 (검증본) | 실측 수개월(2026-10-14 기준 MAG 끝 08-04 약 70일, SWEPAM 2024-07) — 인과 사용 안 함 |
-| SW-015 | ACE daily list 공개 시각 | 해당 없음 (ACE 공개 시각 증거 자료) |
-| SW-016 | ACE 파생 캐시 (alfven/aceturb/mambats/L72/tapfnx) | 2022-08 ~ 2026-10-14 12:00 UTC (v2) |
-| SW-017 | ACE SWEPAM strahl 272 eV | - ~ 2017-07-25 (ACE SWEPAM L3 strahl 원천 종료; 실험 피처는 모두 결측) |
-| SW-018 | GONG-OCB72 PFSS 위상 | 원천 SW-012와 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
-| SW-019 | PFSS connectivity | 원천 SW-012와 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
-| SW-020 | PFSS-WSA 직접 | 원천 SW-012와 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
-| SW-021 | CME-HCS72 | 원천 SW-012·SW-025와 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
-| SW-022 | CH unipolarity / 자기장 집중도 | 원천 SW-012·SW-008과 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
-| SW-023 | CME-chip | 원천 SW-012·SW-008·SW-025와 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
-| SW-024 | NOAA SWPC WSA-Enlil ambient 아카이브 | 실측 중앙 24.5h (p90 3.6일, n=15, runs fetched 2026-10-14, archive Last-Modified−init 00:00) / 규칙 init+12h 또는 Last-Modified — init+12h는 실측보다 짧으므로 Last-Modified 기준이 안전 |
-| SW-025 | DONKI CME·CMEAnalysis·IPS·HSS | 2022-07 ~ 2026-10-12 20:53 UTC (v2) |
-| SW-026 | ENLIL revision 궤적 | 원천 SW-009와 같음: 실측 중앙 5.8h (p90 15.6h, n=399, 2026-06..09, modelCompletionTime−입력 CME 시작) / 규칙 modelCompletionTime≤origin |
-| SW-027 | CCMC CME Scoreboard | 실측 중앙 17.4h (p90 2.4일, n=412, CMEs since 2026-06, submissionTime−CME 시각) / 규칙 submissionTime≤origin |
-| SW-028 | SOHO LASCO C2 512px | 실측 중앙 48분 (p90 4.4h, n=1,786, last 60 days, Last-Modified−프레임 시각) / 규칙 Last-Modified(약 관측+1h) |
-| SW-029 | CACTus LASCO CME 카탈로그 | live 페이지 6시간 주기 / 월간 카탈로그는 다음 달 초 발행 |
-| SW-030 | STEREO-A beacon HI1 | 실측 중앙 20분 (p90 25분, n=23, live fetches since 2026-10-14, Last-Modified−DATE-OBS) / 규칙 DATE-END+1h (2026-10-15 실측 p90의 약 2배) |
-| SW-031 | STEREO-A beacon HI2 | 실측 중앙 29분 (p90 31분, n=21, live fetches since 2026-10-14, Last-Modified−DATE-OBS) / 규칙 DATE-END+1h (2026-10-15 실측 p90의 약 2배) |
-| SW-032 | ISEE IPS (STEL) | 2024-01-01 ~ 2026-10-14 07:54 UTC (nrt-collect) |
-| SW-033 | PUNCH QAM J-map | 실측 중앙 36.0h (p90 2.9일, n=170, 2026-09..10, Last-Modified−관측); 2026-06 초기분은 07-28 일괄 공개(수 주) / 규칙 max(FITS DATE, Last-Modified, DATE-END+1h) |
-| SW-034 | SWPC Solar & Geophysical Event Reports (Type II/III/IV) | 2022-09-01 ~ 2026-10-13 23:59 UTC (v2) |
-| SW-035 | GOES-18 XRS | 규칙 측정+10분 (운영 1분 자료). NCEI 연 파일은 일 단위 갱신(실측 약 1일) |
-| SW-036 | GOES-18 MPS-HI SEP | 실측 첫 공개 일 끝+4.5h, 같은 파일명으로 +2.2일·+6.2일 재발행(최신본 기준이면 약 6일) / 규칙 manifest의 버전별 Last-Modified |
-| SW-037 | SDO/HMI SHARP NRT | 규칙 T_REC+4h (JSOC NRT 키워드, 레코드별 공개 시각 없음) |
-| SW-038 | NMDB 중성자 모니터 | 규칙 시간 bin 끝+64분(spec latency 4분 + bin) |
-| SW-039 | SUVI Fe171 | 실측 중앙 1분 (p90 1분, n=1,429, last 60 days, S3 LastModified−obs_end) / 규칙 SUVI proxy(obs_end+1h) |
-| SW-040 | SUVI 파생 (EUV wave, dimming, CH 형태, CH mask) | 원천 SW-008과 같음 (SUVI 실측 약 1분) / 규칙 SUVI proxy |
-| SW-041 | 영상 임베딩 (DINOv3, V-JEPA) | 원천 SW-008과 같음 (SUVI 실측 약 1분) / 규칙 SUVI proxy |
-| SW-042 | SWPC Forecast Discussion | 실측 발행 즉시 (NGDC Last-Modified−발행 1분, n=109) / 규칙 발행 시각≤origin |
-| SW-055 | GFZ Kp/ap/F10.7, OMNI2, Kyoto Dst | - |
-| SW-057 | GONG 자기장 디코딩 캐시 | 원천 SW-012와 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
-| SW-058 | GONG multi-feature | 원천 SW-012와 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
-<!-- LATENCY-TABLE:END -->
+### STEREO-A HI
 
-<!-- DATA-V2-TABLE:START -->
-## v2 최신화 상태
+| 피처/항목 | 종류 | 파생 ID | 설명 | 계산 | 단위 | 인과 규칙 | 로컬 경로 | 사용 상태 | 코드 근거 |
+|---|---|---|---|---|---|---|---|---|---|
+| HI1 beacon FITS 영상 | 원본 컬럼 | SW-030 | FITS 영상 + 헤더 DATE-OBS, DATE-END, EXPTIME, CRPIX/CDELT, 관측 좌표 | nrt-collect 원본 (가공 없음) | - | available_at = DATE-END + 1h | ~/sunrun/nrt-collect/data/stereo_a/raw/hi_1/ | 수집 중, 피처 미정의 | ~/sunrun/nrt-collect |
+| HI2 beacon FITS 영상 | 원본 컬럼 | SW-031 | FITS 영상 + 헤더 DATE-OBS, DATE-END, EXPTIME, CRPIX/CDELT, 관측 좌표 | nrt-collect 원본 (가공 없음) | - | available_at = DATE-END + 1h | ~/sunrun/nrt-collect/data/stereo_a/raw/hi_2/ | 수집 중, 피처 미정의 | ~/sunrun/nrt-collect |
+| (피처 미정의) | 파생 피처 | - | J-map·CME 추적 등은 아직 없음 | - | - | - | - | 미사용 |  |
 
-위 표는 v1 재현 이력이다. 아래 상태는 SolarWind DB의 S:W 열과 함께 갱신한다. `ready` 전환 조건은 서버의 `data-v2/reports/defaults.json`이며, 수집·해시 검사와 실험 사용 검증은 별개다. 실제 관측 끝이 미검증이거나 일부 생성/전송이 남은 항목을 최신화 완료로 취급하지 않는다.
+### ISEE IPS
 
-| ID | 데이터셋 | v2 경로 | 관측 최신 | 검증 상태 |
-|---|---|---|---|---|
-| SW-001 | ACE 실시간 hourly (수집기 원본) |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
-| SW-002 | ACE hourly stage (sun-db) |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
-| SW-003 | ACE frozen snapshot | /home/t-lab01/sunrun/leaderboard/store/v2/ace-snapshot |  | 미완료 / manifest 없음 |
-| SW-004 | ACE 결측 보간 속도 (학습 타깃·입력) | /home/t-lab01/sunrun/leaderboard/store/v2/ch |  | 미완료 / manifest 없음 |
-| SW-005 | Coronal hole (CH) hourly | /home/t-lab01/sunrun/leaderboard/store/v2/ch |  | 미완료 / manifest 없음 |
-| SW-006 | SUVI Fe195 경도 strip | /home/t-lab01/sunrun/leaderboard/store/v2/suvi-fusion |  | 미완료 / manifest 없음 |
-| SW-007 | SUVI hourly 메타데이터 | /home/t-lab01/sunrun/leaderboard/store/v2/suvi-meta |  | 미완료 / manifest 없음 |
-| SW-008 | GOES-18 SUVI L1b Fe195 원본 |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
-| SW-009 | DONKI WSA-Enlil 아카이브 | /home/t-lab01/sunrun/leaderboard/store/v2/donki | 관측 끝 미검증 | donki: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
-| SW-010 | DONKI WSA-Enlil live | /home/t-lab01/sunrun/leaderboard/store/v2/donki | 관측 끝 미검증 | donki: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
-| SW-011 | GONG polar-cap 특징 | /home/t-lab01/sunrun/leaderboard/store/v2/gong-derived | 관측 끝 미검증 | gong-derived: partial |
-| SW-012 | GONG mrzqs FITS 원본 (부분) | /home/t-lab01/sunrun/leaderboard/store/v2/gong-mrzqs |  | 미완료 / manifest 없음 |
-| SW-013 | ACE K1 SWEPAM alpha/He | /home/t-lab01/sunrun/leaderboard/store/v2/ace-k1 | 관측 끝 미검증 | ace-k1: complete |
-| SW-014 | ACE Level 2 (검증본) | /home/t-lab01/sunrun/leaderboard/store/v2/ace-l2 | 관측 끝 미검증 | ace-l2: complete |
-| SW-015 | ACE daily list 공개 시각 | /home/t-lab01/sunrun/leaderboard/store/v2/ace-release | 관측 끝 미검증 | ace-release: complete_with_upstream_gaps |
-| SW-016 | ACE 파생 캐시 (alfven/aceturb/mambats/L72/tapfnx) | /home/t-lab01/sunrun/leaderboard/store/v2/aceturb<br>/home/t-lab01/sunrun/leaderboard/store/v2/alfven<br>/home/t-lab01/sunrun/leaderboard/store/v2/mambats-inputs<br>/home/t-lab01/sunrun/leaderboard/store/v2/mambats-source | 관측 끝 미검증<br>관측 끝 미검증<br>관측 끝 미검증<br>관측 끝 미검증 | aceturb: completed<br>alfven: completed<br>mambats-inputs: completed<br>mambats-source: running |
-| SW-017 | ACE SWEPAM strahl 272 eV |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
-| SW-018 | GONG-OCB72 PFSS 위상 | /home/t-lab01/sunrun/leaderboard/store/v2/gong-ocb<br>/home/t-lab01/sunrun/leaderboard/store/v2/gong-ocb-r2<br>/home/t-lab01/sunrun/leaderboard/store/v2/gong-ocb-r3<br>/home/t-lab01/sunrun/leaderboard/store/v2/gong-ocb-r4<br>/home/t-lab01/sunrun/leaderboard/store/v2/gong-ocb-r5<br>/home/t-lab01/sunrun/leaderboard/store/v2/gong-ocb-r6<br>/home/t-lab01/sunrun/leaderboard/store/v2/gong-ocb-r7 | 관측 끝 미검증 | gong-ocb: partial<br>미완료 / manifest 없음<br>미완료 / manifest 없음<br>미완료 / manifest 없음<br>미완료 / manifest 없음<br>미완료 / manifest 없음<br>미완료 / manifest 없음 |
-| SW-019 | PFSS connectivity | /home/t-lab01/sunrun/leaderboard/store/v2/pfssconn | 관측 끝 미검증 | pfssconn: partial |
-| SW-020 | PFSS-WSA 직접 | /home/t-lab01/sunrun/leaderboard/store/v2/pfss-wsa |  | 미완료 / manifest 없음 |
-| SW-021 | CME-HCS72 | /home/t-lab01/sunrun/leaderboard/store/v2/cme-hcs | 관측 끝 미검증 | cme-hcs: partial |
-| SW-022 | CH unipolarity / 자기장 집중도 | /home/t-lab01/sunrun/leaderboard/store/v2/chunip<br>/home/t-lab01/sunrun/leaderboard/store/v2/magconc |  | 미완료 / manifest 없음<br>미완료 / manifest 없음 |
-| SW-023 | CME-chip | /home/t-lab01/sunrun/leaderboard/store/v2/cmechip | 관측 끝 미검증 | cmechip: running |
-| SW-024 | NOAA SWPC WSA-Enlil ambient 아카이브 | /home/t-lab01/sunrun/leaderboard/store/v2/enlil-ambient |  | 미완료 / manifest 없음 |
-| SW-025 | DONKI CME·CMEAnalysis·IPS·HSS | /home/t-lab01/sunrun/leaderboard/store/v2/donki | 관측 끝 미검증 | donki: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
-| SW-026 | ENLIL revision 궤적 |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
-| SW-027 | CCMC CME Scoreboard | /home/t-lab01/sunrun/leaderboard/store/v2/ccmc-cme-scoreboard | 관측 끝 미검증 | ccmc-cme-scoreboard: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
-| SW-028 | SOHO LASCO C2 512px | /home/t-lab01/sunrun/leaderboard/store/v2/lasco-c2-512 | 관측 끝 미검증 | lasco-c2-512: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
-| SW-029 | CACTus LASCO CME 카탈로그 | /home/t-lab01/sunrun/leaderboard/store/v2/cactus | 관측 끝 미검증 | cactus: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
-| SW-030 | STEREO-A beacon HI1 |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
-| SW-031 | STEREO-A beacon HI2 |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
-| SW-032 | ISEE IPS (STEL) |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
-| SW-033 | PUNCH QAM J-map | /home/t-lab01/sunrun/leaderboard/store/v2/punch-qam |  | 미완료 / manifest 없음 |
-| SW-034 | SWPC Solar & Geophysical Event Reports (Type II/III/IV) | /home/t-lab01/sunrun/leaderboard/store/v2/swpc-events | 관측 끝 미검증 | swpc-events: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
-| SW-035 | GOES-18 XRS | /home/t-lab01/sunrun/leaderboard/store/v2/goes18-xrs | 2026-10-12T23:59:00.000000000 | goes18-xrs: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
-| SW-036 | GOES-18 MPS-HI SEP | /home/t-lab01/sunrun/leaderboard/store/v2/goes18-sep | 20261013 | goes18-sep: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
-| SW-037 | SDO/HMI SHARP NRT | /home/t-lab01/sunrun/leaderboard/store/v2/hmi-sharp-nrt | 관측 끝 미검증 | hmi-sharp-nrt: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
-| SW-038 | NMDB 중성자 모니터 | /home/t-lab01/sunrun/leaderboard/store/v2/nmdb | 2026-10-14 11:00:00+00:00 | nmdb: 생성됨; 관측 끝/실험 사용 별도 검증 |
-| SW-039 | SUVI Fe171 | /home/t-lab01/sunrun/leaderboard/store/v2/fe171 | 관측 끝 미검증 | fe171: 생성됨; 관측 끝/실험 사용 별도 검증 |
-| SW-040 | SUVI 파생 (EUV wave, dimming, CH 형태, CH mask) | /home/t-lab01/sunrun/leaderboard/store/v2/euvwave<br>/home/t-lab01/sunrun/leaderboard/store/v2/suvi-dim<br>/home/t-lab01/sunrun/leaderboard/store/v2/chmorph<br>/home/t-lab01/sunrun/leaderboard/store/v2/chmask | 관측 끝 미검증 | euvwave: 생성됨; 관측 끝/실험 사용 별도 검증<br>미완료 / manifest 없음<br>미완료 / manifest 없음<br>미완료 / manifest 없음 |
-| SW-041 | 영상 임베딩 (DINOv3, V-JEPA) | /home/t-lab01/sunrun/leaderboard/store/v2/dinov3<br>/home/t-lab01/sunrun/leaderboard/store/v2/vjepa-frozen<br>/home/t-lab01/sunrun/leaderboard/store/v2/vjepa-120h | 관측 끝 미검증<br>관측 끝 미검증 | dinov3: blocked_credentials<br>vjepa-frozen: running<br>미완료 / manifest 없음 |
-| SW-055 | GFZ Kp/ap/F10.7, OMNI2, Kyoto Dst |  |  | 기존 원천 / 증거 / 갱신 대상 아님 (이력 보존) |
-| SW-057 | GONG 자기장 디코딩 캐시 | /home/t-lab01/sunrun/leaderboard/store/v2/gong-decoded | 관측 끝 미검증 | gong-decoded: partial |
-| SW-042 | SWPC Forecast Discussion | /home/t-lab01/sunrun/leaderboard/store/v2/swpc-discussion | 관측 끝 미검증 | swpc-discussion: 생성됨; 관측 끝/실험 사용 별도 검증; SHA256 index verified |
-| SW-058 | GONG multi-feature | /home/t-lab01/sunrun/leaderboard/store/v2/gong-derived | 관측 끝 미검증 | gong-derived: partial |
+| 피처/항목 | 종류 | 파생 ID | 설명 | 계산 | 단위 | 인과 규칙 | 로컬 경로 | 사용 상태 | 코드 근거 |
+|---|---|---|---|---|---|---|---|---|---|
+| Date, MidObsUT | 원본 컬럼 | SW-032 | 관측 일자·중간 시각 | STEL{YYYY}.dat 공백 구분 열 (-999 = 결측) | UT | 관측 시각 이후 처음 오는 18:00 UT | ~/sunrun/nrt-collect/data/ips/raw/stel/ | 수집 중, 피처 미정의 | ~/sunrun/nrt-collect |
+| Dur. | 원본 컬럼 | SW-032 | 관측 시간 | STEL{YYYY}.dat 공백 구분 열 (-999 = 결측) | 분 | 관측 시각 이후 처음 오는 18:00 UT | ~/sunrun/nrt-collect/data/ips/raw/stel/ | 수집 중, 피처 미정의 | ~/sunrun/nrt-collect |
+| Site, Freq, BW | 원본 컬럼 | SW-032 | 관측소(STEL), 주파수 327 MHz, 대역폭 | STEL{YYYY}.dat 공백 구분 열 (-999 = 결측) | MHz | 관측 시각 이후 처음 오는 18:00 UT | ~/sunrun/nrt-collect/data/ips/raw/stel/ | 수집 중, 피처 미정의 | ~/sunrun/nrt-collect |
+| Source | 원본 컬럼 | SW-032 | 전파원 이름 | STEL{YYYY}.dat 공백 구분 열 (-999 = 결측) | - | 관측 시각 이후 처음 오는 18:00 UT | ~/sunrun/nrt-collect/data/ips/raw/stel/ | 수집 중, 피처 미정의 | ~/sunrun/nrt-collect |
+| Size | 원본 컬럼 | SW-032 | 전파원 크기 | STEL{YYYY}.dat 공백 구분 열 (-999 = 결측) | - | 관측 시각 이후 처음 오는 18:00 UT | ~/sunrun/nrt-collect/data/ips/raw/stel/ | 수집 중, 피처 미정의 | ~/sunrun/nrt-collect |
+| RA-J2000, Dec-J2000 | 원본 컬럼 | SW-032 | 전파원 적경·적위 | STEL{YYYY}.dat 공백 구분 열 (-999 = 결측) | - | 관측 시각 이후 처음 오는 18:00 UT | ~/sunrun/nrt-collect/data/ips/raw/stel/ | 수집 중, 피처 미정의 | ~/sunrun/nrt-collect |
+| Limb, Dist., Lat., PA, Elong | 원본 컬럼 | SW-032 | 시선 최근접점 위치 (동/서 림, 거리, 위도, 위치각, 이각) | STEL{YYYY}.dat 공백 구분 열 (-999 = 결측) | deg | 관측 시각 이후 처음 오는 18:00 UT | ~/sunrun/nrt-collect/data/ips/raw/stel/ | 수집 중, 피처 미정의 | ~/sunrun/nrt-collect |
+| Vel., V-err, g-value, g-err, Method (×2) | 원본 컬럼 | SW-032 | IPS 태양풍 속도와 오차, scintillation g-value (3-St. CC / 1-St. PS 방법별) | STEL{YYYY}.dat 공백 구분 열 (-999 = 결측) | km/s, - | 관측 시각 이후 처음 오는 18:00 UT | ~/sunrun/nrt-collect/data/ips/raw/stel/ | 수집 중, 피처 미정의 | ~/sunrun/nrt-collect |
 
-<!-- DATA-V2-TABLE:END -->
+### SWPC Discussion
+
+| 피처/항목 | 종류 | 파생 ID | 설명 | 계산 | 단위 | 인과 규칙 | 로컬 경로 | 사용 상태 | 코드 근거 |
+|---|---|---|---|---|---|---|---|---|---|
+| 발행 텍스트 | 원본 컬럼 | SW-042 | SWPC Forecast Discussion 본문 (태양 활동, 태양풍 예보 문단) | NGDC daily_reports/discussion 아카이브 텍스트 | - | 발행 시각 ≤ origin | ~/sunrun/leaderboard/store/swpc-discussion76/, store/v2/swpc-discussion/ | 피처 미정의 |  |
+| 발행 시각 | 원본 컬럼 | SW-042 | 문서 발행 시각 (UTC) | 헤더 파싱 | UTC | 발행 시각 ≤ origin |  | - |  |
+
+### LASCO C2
+
+| 피처/항목 | 종류 | 파생 ID | 설명 | 계산 | 단위 | 인과 규칙 | 로컬 경로 | 사용 상태 | 코드 근거 |
+|---|---|---|---|---|---|---|---|---|---|
+| C2 512px 프레임 | 원본 컬럼 | SW-028 | SOHO LASCO C2 영상 (약 12분 간격) + 헤더 | REPROCESSING 512px | - | Last-Modified (약 관측 + 1h) | ~/sunrun/leaderboard/store/v2/lasco-c2-512/, solar-inc-lascovision-20261014/frames | 수집 중 (v2) |  |
+| lasco_pca00 | 파생 피처 | SW-028 | running-difference 형태 PCA 성분 0 | 연속 프레임 쌍 running difference → PCA (학습 cutoff 이전 적합) | - | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_pca01 | 파생 피처 | SW-028 | running-difference 형태 PCA 성분 1 | 연속 프레임 쌍 running difference → PCA (학습 cutoff 이전 적합) | - | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_pca02 | 파생 피처 | SW-028 | running-difference 형태 PCA 성분 2 | 연속 프레임 쌍 running difference → PCA (학습 cutoff 이전 적합) | - | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_pca03 | 파생 피처 | SW-028 | running-difference 형태 PCA 성분 3 | 연속 프레임 쌍 running difference → PCA (학습 cutoff 이전 적합) | - | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_pca04 | 파생 피처 | SW-028 | running-difference 형태 PCA 성분 4 | 연속 프레임 쌍 running difference → PCA (학습 cutoff 이전 적합) | - | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_pca05 | 파생 피처 | SW-028 | running-difference 형태 PCA 성분 5 | 연속 프레임 쌍 running difference → PCA (학습 cutoff 이전 적합) | - | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_pca06 | 파생 피처 | SW-028 | running-difference 형태 PCA 성분 6 | 연속 프레임 쌍 running difference → PCA (학습 cutoff 이전 적합) | - | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_pca07 | 파생 피처 | SW-028 | running-difference 형태 PCA 성분 7 | 연속 프레임 쌍 running difference → PCA (학습 cutoff 이전 적합) | - | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_pca08 | 파생 피처 | SW-028 | running-difference 형태 PCA 성분 8 | 연속 프레임 쌍 running difference → PCA (학습 cutoff 이전 적합) | - | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_pca09 | 파생 피처 | SW-028 | running-difference 형태 PCA 성분 9 | 연속 프레임 쌍 running difference → PCA (학습 cutoff 이전 적합) | - | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_pca10 | 파생 피처 | SW-028 | running-difference 형태 PCA 성분 10 | 연속 프레임 쌍 running difference → PCA (학습 cutoff 이전 적합) | - | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_pca11 | 파생 피처 | SW-028 | running-difference 형태 PCA 성분 11 | 연속 프레임 쌍 running difference → PCA (학습 cutoff 이전 적합) | - | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_pca12 | 파생 피처 | SW-028 | running-difference 형태 PCA 성분 12 | 연속 프레임 쌍 running difference → PCA (학습 cutoff 이전 적합) | - | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_pca13 | 파생 피처 | SW-028 | running-difference 형태 PCA 성분 13 | 연속 프레임 쌍 running difference → PCA (학습 cutoff 이전 적합) | - | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_pca14 | 파생 피처 | SW-028 | running-difference 형태 PCA 성분 14 | 연속 프레임 쌍 running difference → PCA (학습 cutoff 이전 적합) | - | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_pca15 | 파생 피처 | SW-028 | running-difference 형태 PCA 성분 15 | 연속 프레임 쌍 running difference → PCA (학습 cutoff 이전 적합) | - | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_frame_age_h | 파생 피처 | SW-028 | 최신 사용 프레임 나이 | - | h | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_n_pairs | 파생 피처 | SW-028 | 사용한 프레임 쌍 수 | - | 개 | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |
+| lasco_missing | 파생 피처 | SW-028 | 결측 플래그 | - | 0/1 | Last-Modified ≤ origin | ~/sunrun/leaderboard/store/solar-inc-lascovision-20261014/cache/ | 실험 이력 E1182 미개선 | experiments/solar_inc_lascovision_20261014/lasco_features.py |

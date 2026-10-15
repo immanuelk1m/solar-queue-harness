@@ -87,7 +87,7 @@ A등급 예측 실험이 0건이면 B/C 실험을 억지로 넣지 말고 다음
 
 입력:
 - 시트: https://docs.google.com/spreadsheets/d/1eqmgRn3qJH_44Bkv14piwzhADU2fWZL8-p-d6EzF-nw (탭 `태양풍 연구`, `태양풍 큐`)
-- 데이터셋 manifest: https://docs.google.com/spreadsheets/d/1KWgNQPlajHWw7FLUMz3lr4rO2z7sxuxXGstD0-YjAw4 (SolarWind DB, 탭 `데이터셋 manifest`; 미러 `references/datasets.md`)
+- 데이터셋 manifest: https://docs.google.com/spreadsheets/d/1KWgNQPlajHWw7FLUMz3lr4rO2z7sxuxXGstD0-YjAw4 (SolarWind DB, 탭 `데이터셋 manifest`=사용자 요청 원천, 원천별 피처 탭=파생 항목; 미러 `references/datasets.md`)
 - 모델 스크립트: https://github.com/TLAB-HGU/sunrun-leaderboard/tree/main/scripts/seongeun
 
 반드시 함께 읽을 파일: `references/contract.md`(평가 계약), `references/evidence.md`(확정 사실·닫힌 축), `references/row-template.md`(큐 행 양식), `references/literature.md`(검색·수학 대안 절차), `references/diagnostics.md`(1.5단계 연구 건강 진단 계산법), `references/heuristics.md`(손으로 정한 휴리스틱 금지 규칙), `references/datasets.md`(사용 중·수집 중·평가된 데이터셋 manifest). PIVOT 모드일 때만 `references/pivot.md`도 읽는다.
