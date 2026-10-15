@@ -81,6 +81,60 @@ probe 응답·샘플만 있다. 학습 데이터로 쓰지 않는다: SW-015 `~/
 - SW-055 GFZ Kp/ap/F10.7, OMNI2, Kyoto Dst: 지자기·태양 지수. 미수집.
 - SW-056 nrt-collect 중단 소스: STEREO COR2/EUVI/PLASTIC/IMPACT, CCOR-2, e-CALLISTO, Solar Orbiter LL, LASCO C2/C3 RT, SOLAR-1, UCSD tomography. 사용자 중단. 2026-10-14 사용자 결정: 연구 데이터와 겹치거나 범위 밖이라 수집 중단·삭제
 
+<!-- LATENCY-TABLE:START -->
+## 입수지연 (관측 → 실제 입수까지 걸리는 시간)
+
+SolarWind DB의 `입수지연` 열(O열)과 같다. 실측은 수집 기록의 HTTP Last-Modified·생성·제출 시각에서 잰 중앙값과 p90이고, `/` 뒤는 연구에서 쓰는 인과 규칙이다. 근거 계산은 `~/sunrun/data-v2/latency_report.py`(결과 `reports/latency-20261015.json`). 행에서 인과 지연 상수를 정할 때는 규칙값 이상, 실측 p90을 넘는 쪽을 권장한다.
+
+| ID | 데이터셋 | 입수지연 |
+|---|---|---|
+| SW-001 | ACE 실시간 hourly (수집기 원본) | 실측: daily list가 일 끝+11분에 생성(n=499, 2025-06~2026-10), 실시간 2-hour list는 2~3분 / 규칙 관측+2h |
+| SW-002 | ACE hourly stage (sun-db) | 실측: daily list가 일 끝+11분에 생성(n=499, 2025-06~2026-10), 실시간 2-hour list는 2~3분 / 규칙 관측+2h |
+| SW-003 | ACE frozen snapshot | 실측: daily list가 일 끝+11분에 생성(n=499, 2025-06~2026-10), 실시간 2-hour list는 2~3분 / 규칙 관측+2h |
+| SW-004 | ACE 결측 보간 속도 (학습 타깃·입력) | 실측: daily list가 일 끝+11분에 생성(n=499, 2025-06~2026-10), 실시간 2-hour list는 2~3분 / 규칙 관측+2h |
+| SW-005 | Coronal hole (CH) hourly | 원천 SW-008과 같음 (SUVI 실측 약 1분) / 규칙 SUVI proxy(obs_end+1h) |
+| SW-006 | SUVI Fe195 경도 strip | 실측 중앙 1분 (p90 1분, n=1,429, last 60 days, S3 LastModified−obs_end) / 규칙 obs_end+1h 및 S3 LastModified≤origin |
+| SW-007 | SUVI hourly 메타데이터 | 실측 중앙 1분 (p90 1분, n=1,429, last 60 days, S3 LastModified−obs_end) / 규칙 obs_end+1h 및 S3 LastModified≤origin |
+| SW-008 | GOES-18 SUVI L1b Fe195 원본 | 실측 중앙 1분 (p90 1분, n=1,429, last 60 days, S3 LastModified−obs_end) / 규칙 obs_end+1h 및 S3 LastModified≤origin |
+| SW-009 | DONKI WSA-Enlil 아카이브 | 실측 중앙 5.8h (p90 15.6h, n=399, 2026-06..09, modelCompletionTime−입력 CME 시작) / 규칙 modelCompletionTime≤origin |
+| SW-010 | DONKI WSA-Enlil live | 실측 중앙 5.8h (p90 15.6h, n=399, 2026-06..09, modelCompletionTime−입력 CME 시작) / 규칙 modelCompletionTime≤origin |
+| SW-011 | GONG polar-cap 특징 | 원천 SW-012와 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
+| SW-012 | GONG mrzqs FITS 원본 (부분) | 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
+| SW-013 | ACE K1 SWEPAM alpha/He | 실측 약 242h(아카이브 끝 vs 2026-10-14 조회) / 규칙 244h |
+| SW-014 | ACE Level 2 (검증본) | 실측 수개월(2026-10-14 기준 MAG 끝 08-04 약 70일, SWEPAM 2024-07) — 인과 사용 안 함 |
+| SW-015 | ACE daily list 공개 시각 | 해당 없음 (ACE 공개 시각 증거 자료) |
+| SW-016 | ACE 파생 캐시 (alfven/aceturb/mambats/L72/tapfnx) | 원천 ACE와 같음: 실측: daily list가 일 끝+11분에 생성(n=499, 2025-06~2026-10), 실시간 2-hour list는 2~3분 / 규칙 관측+2h |
+| SW-017 | ACE SWEPAM strahl 272 eV | 원천 ACE와 같음: 실측: daily list가 일 끝+11분에 생성(n=499, 2025-06~2026-10), 실시간 2-hour list는 2~3분 / 규칙 관측+2h |
+| SW-018 | GONG-OCB72 PFSS 위상 | 원천 SW-012와 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
+| SW-019 | PFSS connectivity | 원천 SW-012와 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
+| SW-020 | PFSS-WSA 직접 | 원천 SW-012와 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
+| SW-021 | CME-HCS72 | 원천 SW-012·SW-025와 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
+| SW-022 | CH unipolarity / 자기장 집중도 | 원천 SW-012·SW-008과 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
+| SW-023 | CME-chip | 원천 SW-012·SW-008·SW-025와 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
+| SW-024 | NOAA SWPC WSA-Enlil ambient 아카이브 | 실측 중앙 24.5h (p90 3.6일, n=15, runs fetched 2026-10-14, archive Last-Modified−init 00:00) / 규칙 init+12h 또는 Last-Modified — init+12h는 실측보다 짧으므로 Last-Modified 기준이 안전 |
+| SW-025 | DONKI CME·CMEAnalysis·IPS·HSS | 실측 CMEAnalysis 중앙 3.3h (p90 11.0h, n=244, time21_5 기준), CME 기록 중앙 7.0h (p90 4.4일, n=564, startTime 기준), 2026-06~09 / 규칙 submissionTime≤origin |
+| SW-026 | ENLIL revision 궤적 | 원천 SW-009와 같음: 실측 중앙 5.8h (p90 15.6h, n=399, 2026-06..09, modelCompletionTime−입력 CME 시작) / 규칙 modelCompletionTime≤origin |
+| SW-027 | CCMC CME Scoreboard | 실측 중앙 17.4h (p90 2.4일, n=412, CMEs since 2026-06, submissionTime−CME 시각) / 규칙 submissionTime≤origin |
+| SW-028 | SOHO LASCO C2 512px | 실측 중앙 48분 (p90 4.4h, n=1,786, last 60 days, Last-Modified−프레임 시각) / 규칙 Last-Modified(약 관측+1h) |
+| SW-029 | CACTus LASCO CME 카탈로그 | live 페이지 6시간 주기 / 월간 카탈로그는 다음 달 초 발행 |
+| SW-030 | STEREO-A beacon HI1 | 실측 중앙 20분 (p90 25분, n=23, live fetches since 2026-10-14, Last-Modified−DATE-OBS) / 규칙 미정 (E1337은 DATE-END+2h 사용, 과거 공개 시각 증빙 없음) |
+| SW-031 | STEREO-A beacon HI2 | 실측 중앙 29분 (p90 31분, n=21, live fetches since 2026-10-14, Last-Modified−DATE-OBS) / 규칙 미정 (E1337은 DATE-END+2h 사용) |
+| SW-032 | ISEE IPS (STEL) | 실측 약 9.2h (파일 버전 n=4, 마지막 관측→파일 갱신); 파일은 매일 약 02:20 UT 재생성되어 관측별 최대 약 1일 대기 / 규칙 없음 (보수적 상수 필요) |
+| SW-033 | PUNCH QAM J-map | 실측 중앙 36.0h (p90 2.9일, n=170, 2026-09..10, Last-Modified−관측); 2026-06 초기분은 07-28 일괄 공개(수 주) / 규칙 max(FITS DATE, Last-Modified, DATE-END+1h) |
+| SW-034 | SWPC Solar & Geophysical Event Reports (Type II/III/IV) | 실측 NGDC 아카이브 일 끝+2.2일 (n=123, 2026-06~09), 실시간 텍스트는 수 분 / 규칙 보고서 생성 시각 |
+| SW-035 | GOES-18 XRS | 규칙 측정+10분 (운영 1분 자료). NCEI 연 파일은 일 단위 갱신(실측 약 1일) |
+| SW-036 | GOES-18 MPS-HI SEP | 실측 첫 공개 일 끝+4.5h, 같은 파일명으로 +2.2일·+6.2일 재발행(최신본 기준이면 약 6일) / 규칙 manifest의 버전별 Last-Modified |
+| SW-037 | SDO/HMI SHARP NRT | 규칙 T_REC+4h (JSOC NRT 키워드, 레코드별 공개 시각 없음) |
+| SW-038 | NMDB 중성자 모니터 | 규칙 시간 bin 끝+64분(spec latency 4분 + bin) |
+| SW-039 | SUVI Fe171 | 실측 중앙 1분 (p90 1분, n=1,429, last 60 days, S3 LastModified−obs_end) / 규칙 SUVI proxy(obs_end+1h) |
+| SW-040 | SUVI 파생 (EUV wave, dimming, CH 형태, CH mask) | 원천 SW-008과 같음 (SUVI 실측 약 1분) / 규칙 SUVI proxy |
+| SW-041 | 영상 임베딩 (DINOv3, V-JEPA) | 원천 SW-008과 같음 (SUVI 실측 약 1분) / 규칙 SUVI proxy |
+| SW-042 | SWPC Forecast Discussion | 실측 발행 즉시 (NGDC Last-Modified−발행 1분, n=109) / 규칙 발행 시각≤origin |
+| SW-055 | GFZ Kp/ap/F10.7, OMNI2, Kyoto Dst | - |
+| SW-057 | GONG 자기장 디코딩 캐시 | 원천 SW-012와 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
+| SW-058 | GONG multi-feature | 원천 SW-012와 같음: 실측 중앙 38분 (p90 4.9h, n=58, last 60 days, Last-Modified−지도 시각) / 규칙 max(관측+2h, Last-Modified) |
+<!-- LATENCY-TABLE:END -->
+
 <!-- DATA-V2-TABLE:START -->
 ## v2 최신화 상태
 
