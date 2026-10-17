@@ -85,6 +85,7 @@
 - tree pruning / subset selection / Rashomon / post-prune: crbts72(MILP infeasible), rcp72, cspr72 계열.
 - 신경망 backbone 교체: TabPFN E0545 3488.8, xLSTM 5106, NBEATSx 5984, Transformer/Crossformer 계열 모두 E0472보다 나쁨. 단, 대부분 짧은 학습(다수 < 3분, directive #14 이전)과 한 행짜리 단발 시도였다. 닫힌 것은 "빠른 backbone 교체"이고, 계보 예산으로 키우는 아키텍처 전체 피봇(ARCH)은 아직 열려 있다.
 - 같은 source의 다른 요약: DONKI CME 분석 특징 E0475(+0.7%), DBM 도착 E0476(+1.5%, E0408 기준), NOAA Enlil 특징 E0241(+0.03%).
+- STEREO-A beacon HI time-elongation 멤버 도착 가중(RD/MAD 선적분 + SSE 투영 곡선 softmax): `solar-infotest-hijmapens-20261016` 직접 사건 정보 검정에서 n_HI=85/98, A/B/C/D 공통 57사건·1,759 origin. 사건 평균 MAE는 A=24.537h, B=15.605h, C=15.550h, D=15.579h. 27일 사건 블록 25개 bootstrap에서 C−A 95% CI=[−12.463, −5.065]h였지만, C−B=[−0.791, 0.497]h 및 C−D=[−0.587, 0.384]h는 0을 포함한다. 사전 판정 규칙에 따라 이 **멤버 가중 메커니즘**을 `not_informative`로 닫고 HI 입력 우선순위를 낮춘다. 다른 HI 표현은 별도 가설로 남긴다. 상세: `leaderboard/experiments/solar_infotest_hijmapens_20261016/arrival_eval.json`.
 - ENLIL 특징 확장 6개 arm(E0518-F, 공식 창 3272–3307): 모두 E0472와 같거나 나쁨. 학습 보정도 표본 밖에서 기존 예측을 못 이김.
 - 기존 입력으로 shock 도착 시각을 직접 학습(E0555, 89개 충격파): MAE 13.2h로 Enlil 12.5h보다 나쁨.
 - SURF hydro / HUXt 단독 전파 예보(q77 E0665): recurrence보다 MSE가 크게 나쁨(31262·32857 vs 11515). 특징으로 결합하는 실험은 아직 없다.
