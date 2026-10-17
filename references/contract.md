@@ -1,9 +1,12 @@
-# 평가 계약 (고정값 — 워커 규칙 AGENTS.md LB10:20261013 기준, 2026-10-13)
+# 평가 계약 (고정값 — 워커 규칙 AGENTS.md ROLL3:20261017 기준, 2026-10-17; LB10의 "모든 행 공식 창 판정"을 대체)
 
 ## 과제와 평가
 - 과제: 매 시각 origin에서 L1 태양풍 속도를 1–72시간 앞까지 시간 단위로 예측한다. 단위는 km/s다.
 - 공식 평가 창(리더보드): target 2026-06-01 00:00 ~ 2026-09-30 00:00 UTC, 2,833개 origin × 72h. 리더보드 scorer와 snapshot 정답을 쓴다.
-- 판정은 `expos lb-eval`로만 한다. seed 0/1/2 세 개가 각각 `predictions_official_s{seed}.parquet`을 쓴다(모든 공식 origin×72h). 지표는 seed-mean total MSE (km/s)²이고, 고속 셀 4개(low_low_high, low_high_high, high_low_high, high_high_high)와 사건 F1을 함께 보고한다.
+- **판정은 roll3로 한다(v7).** 공식 창 직전 1년 3폴드: F1 2025-06-01~09-30, F2 2025-10-01~2026-01-31, F3 2026-02-01~05-28 23:00(매시 origin×72h). 폴드 k의 학습 컷오프는 폴드 시작 −72h(target ≤ 컷오프)다. seed 0/1/2가 `runs/<E>/roll3/f{k}_s{seed}.parquet`을 쓰고 `expos roll3-eval <E> --control <control E>`로 짝 비교한다. 통과: 풀링 상대 MSE ≤ −1%, 72h 블록 부트스트랩 95% 상한 < 0, 2/3 폴드 이상 개선, 이벤트 F1 비퇴행. 러너 도우미는 `experiments/roll3_common.py`(folds(), write())다.
+- **도착 선검정**: 새 정보원·도착/전파 상태·ARCH 행은 `expos arrival-eval <E> --control <control E>`도 실행한다. 라벨 `store/arrival-labels-v1`(L1 실측 사후 라벨, 주 라벨 t_onset). 통과 = capped MAE(24h 상한) 차이 95% 상한 < 0 또는 hit rate 차이 95% 하한 > 0, 사건 ≥ 50.
+- **공식 창 확인**: roll3(와 해당 행이면 도착 선검정)를 통과한 행만 seed 0/1/2 `predictions_official_s{seed}.parquet`(모든 공식 origin×72h) → `expos lb-eval`을 1회 한다. 지표는 seed-mean total MSE (km/s)², 고속 셀 4개, 사건 F1이다. 공식 창 점수로 후보를 고르거나 버리지 않는다.
+- 결과 칸 첫 줄: `R3|`, 다음 `ARR|`(해당 행), 다음 `LB|`(실행했을 때).
 - smoke와 7일 블록 판정은 없다(LB10). CAL/SEARCH/W0–W2 같은 내부 창은 디버깅 참고용일 뿐이다.
 
 ## 동적 기준 선택
@@ -40,8 +43,8 @@
 
 ## 자원 (워커 1개 기준)
 - CPU 3–4스레드에 고정된다. 트리·부스팅은 CPU, 딥러닝·파운데이션 모델은 GPU가 필수다(2장 공용, lease 대기).
-- 워커 1개의 제한 시간은 12시간이다. 실패하면 디스패처가 최대 4회까지 이어서 재시도한다.
-- 참고: E0472 계열 레시피의 공식 창 3-seed run은 `experiments/e0472_ablation_hpo` config + unit 방식으로 20–35분 걸린다.
+- 워커 1개의 제한 시간은 24시간이다(roll3 9 fit + 공식 3 fit). 실패하면 디스패처가 최대 4회까지 이어서 재시도하고, 그래도 인프라 실패로 끝나면 `RECOVER-<ID>`로 한 번 더 재투입한다.
+- 참고: E0472 계열 레시피의 공식 창 3-seed run은 `experiments/e0472_ablation_hpo` config + unit 방식으로 20–35분 걸린다. E1149(L72-COND) 레시피의 roll3 control은 `experiments/roll3_e1149_control/run.py`(seed당 약 1.5–2h)다.
 
 ## 코드 위치 (워커 로컬 경로)
 - 현재 작업 챔피언의 코드 경로는 `태양풍 연구`의 최신 결과 및 연결된 experiment/E id에서 매 실행 확인한다.

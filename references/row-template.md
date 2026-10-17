@@ -15,12 +15,13 @@
 [기준 레시피]
 - 작업 챔피언 <E id>(현재 계약 준수 lb-eval seed-mean <값>, seed <값/값/값>, 고속 셀 llh/lhh/hlh/hhh <값들>). SKILL 1단계에서 시트 최신값으로 확정한 값을 쓴다. 기본값을 하드코딩하지 않는다.
 - 코드: <로컬 경로 또는 GitHub scripts/seongeun/... 경로>. 시트의 해당 E id 결과·experiment에서 확인한다.
-- 대조군 = 이 기준 레시피를 같은 코드·같은 seed·ACE obs+2h 규칙으로 전체 구간에서 다시 돌린 결과다. 이미 있으면 그 E id를 쓴다.
+- roll3 control = 이 기준 레시피를 같은 폴드·seed·ACE obs+2h 규칙으로 돌린 run이다. 시트의 최신 `R3| ... type=control` 행 E id를 쓴다. 없으면 워커가 먼저 control을 만든다(예: `experiments/roll3_e1149_control/run.py`를 본떠 기준 레시피를 폴드 컷오프마다 다시 학습).
 
 [단일 변경]
 - 기준 레시피에서 바뀌는 것 하나만 코드 수준으로 쓴다: 어떤 입력/특징/대상/학습 단위를 어떻게 바꾸는지, 새 함수의 입출력, 추가되는 config 키.
 - 바뀌지 않는 것을 명시한다(나머지 특징, 하이퍼파라미터, 후처리).
 - COMBINE: 결합할 변경들의 E id와 각 단독 결과를 적고, 결합 방식을 쓴다.
+- **새 정보원(도착 채널, v7):** 정보원 입력 → 저차원 도착 추정 헤드(다음 72h 안 onset 시각·확률·상승 진폭, ≤ 4값)를 `store/arrival-labels-v1` 사후 라벨을 target으로 학습한다(라벨 성숙: 사건 앵커 + 7일 ≤ 학습 컷오프, 라벨은 입력 금지). 챔피언에는 이 저차원 추정만 붙인다. 원시 요약을 특징 열 블록으로 그대로 붙이지 않는다.
 
 [가설·근거]
 - 해결하려는 오차 성분(리드대역/셀/이벤트 유형)과 그 크기: 내부 수치로 쓴다.
@@ -60,17 +61,19 @@
 - 기존 store / 새 다운로드(출처 URL, 예상 용량), CPU 또는 GPU, 예상 시간.
 
 [실험]
-- 리더보드 전체 구간 full run을 seed 0/1/2로 돌려 predictions_official_s{seed}.parquet을 쓴 뒤 expos lb-eval을 실행한다. smoke와 내부 창 판정은 하지 않는다.
-- 같은 기준 레시피 대조군 대비 seed별·평균 MSE, 고속 셀 4개, 리드대역, F1을 보고한다.
+- roll3: `experiments/roll3_common.py`의 folds()로 폴드 3개 × seed 0/1/2를 학습·예측해 `roll3/f{k}_s{seed}.parquet`을 쓰고 `expos roll3-eval <E> --control <control E>`를 실행한다.
+- 새 정보원·도착/전파 상태 행이면 `expos arrival-eval <E> --control <control E>`도 실행한다.
+- roll3(와 해당 행이면 도착 선검정)를 통과했을 때만 공식 창 seed 0/1/2 run → predictions_official_s{seed}.parquet → `expos lb-eval`을 1회 실행한다. 통과하지 못하면 공식 창은 돌리지 않고 roll3 결과로 끝낸다.
+- control 대비 풀링·폴드별 MSE, 리드대역, F1, (해당 시) 도착 지표를 보고한다. smoke와 7일 블록 판정은 하지 않는다.
 - 구현 중 고장은 고쳐서 끝까지 완수한다.
 
 [채택 시]
-- 작업 챔피언보다 평균이 1.5% 이상 낮고 모든 seed가 낮으면 이 run이 새 작업 챔피언이 된다(1.5% 미만은 동률). 이후 큐 행은 이 run을 [기준 레시피]로 삼는다.
+- roll3 통과 + 공식 창 lb-eval seed-mean이 작업 챔피언보다 낮으면 이 run이 새 작업 챔피언(잠정)이 된다. 이후 큐 행은 이 run을 [기준 레시피]로 삼고, 이 레시피의 roll3 control은 이 run의 roll3 결과다.
 - run 시작 시 시트에서 확정한 **현재 SOTA**와 동일 평가 계약에서 그 값을 재현 가능하게 넘으면 SOTA 갱신 후보로 기록한다.
 - 특정 E id를 SOTA로 하드코딩하지 않는다.
 
 [부분 개선 시]
-- 기준 레시피 대비 평균 −0.8% 이상이고 3개 seed 모두 낮으면 "스택 후보"로 기록한다. 다음 COMBINE 행의 재료가 된다.
+- roll3 d_pool ≤ −0.5%이고 3폴드 중 2개 이상 개선이면 "스택 후보"로 기록한다(roll3 미통과여도 된다). 다음 COMBINE 행의 재료가 된다.
 - 성능 개선 폭이 작더라도, 사전 정의한 중간 정보 검정에서 중요한 가설을 명확히 판별했다면 `정보 획득` 결과로 별도 기록한다. 성능 개선과 연구 정보 획득을 혼동하지 않는다.
 
 [실패 시 닫히는 축]
@@ -80,10 +83,12 @@
 - 시트 `태양풍 연구`/`태양풍 큐`에서 가장 가까운 기존 행 2–3개의 ID와, 메커니즘이 어떻게 다른지.
 ```
 
-## 결과 기록 줄 (예측 모드 공통 — INCREMENT/COMBINE/PIVOT/ARCH/ARCH-STEP, 워커가 결과 칸 첫 줄에 쓴다)
-`LB| E=<id> base=<base id> seeds=<s0,s1,s2> mse=<a/b/c> mean=<m> d_base=<값,%> cells=<llh/lhh/hlh/hhh> type=<특징 블록 추가|후처리·잔차|하이퍼파라미터|예측 대상 변경|구조·학습 단위|새 정보원|replicate|arch>`
-ARCH·ARCH-STEP 행은 같은 줄 끝에 `lineage=<계보> stage=<N> d_prev=<직전 단계 대비 값,%>`를 붙이고, `base`에는 비교 대상인 확정 챔피언 E id를 쓴다.
-사양 끝에 "결과 칸 첫 줄에 위 `LB|` 줄을 쓴다"를 적는다.
+## 결과 기록 줄 (예측 모드 공통 — INCREMENT/COMBINE/PIVOT/ARCH/ARCH-STEP, 워커가 결과 칸 맨 위에 쓴다)
+1. `R3| E=<id> base=<control id> folds=1,2,3 seeds=<s0,s1,s2> d_pool=<%> ci=[<lo%>,<hi%>] folds_better=<k>/3 f1=<cand>/<control> mde80=<값> pass=<Y|n> type=<특징 블록 추가|후처리·잔차|하이퍼파라미터|예측 대상 변경|구조·학습 단위|새 정보원|arch>` — `expos roll3-eval`이 출력하는 `line`에 type만 덧붙인다.
+2. (해당 행) `ARR| E=<id> base=<control id> events=<n> mae=<h> hit=<값> d_mae=<h> ci=[..] d_hit=<값> ci=[..] pass=<Y|n> labels=v1[-draft]` — `expos arrival-eval`의 `line`.
+3. (공식 창을 돌렸을 때) `LB| E=<id> base=<base id> seeds=<s0,s1,s2> mse=<a/b/c> mean=<m> d_base=<값,%> cells=<llh/lhh/hlh/hhh> type=<...>`
+ARCH·ARCH-STEP 행은 `R3|` 줄 끝에 `lineage=<계보> stage=<N> d_prev=<직전 단계 대비 값,%> standalone=<단독 roll3 풀링 MSE>`를 붙인다.
+사양 끝에 "결과 칸 맨 위에 위 `R3|`(·`ARR|`·`LB|`) 줄을 쓴다"를 적는다.
 
 ## 해결 작업 양식 — A급 예측 실험이 0건일 때
 
@@ -172,11 +177,12 @@ ARCH·ARCH-STEP 행은 같은 줄 끝에 `lineage=<계보> stage=<N> d_prev=<직
 
 [입력·데이터 파이프라인]
 - 쓰는 source와 표현(원시 시계열, 영상, 자기장 지도, 사건 목록 등), 인과 정렬 방법. 기존 데이터 로더·인과 특징 빌더 재사용은 허용한다.
-- 금지: E0472 계열 모델의 예측·잔차·OOF를 입력이나 타깃으로 쓰는 것. E0472 계열과의 블렌딩·앙상블.
+- 사전학습: OMNI2 hourly(SW-062, 2000-01~)로 사전학습한 뒤 ACE 기간(2022-08~)으로 미세조정한다. OMNI2는 학습에만 쓰고 origin 시점 입력으로 쓰지 않는다.
+- 챔피언 고정 결합(v7): ARCH 출력은 챔피언 궤적(같은 폴드 컷오프의 챔피언 roll3 예측) 위의 학습형 잔차 또는 학습형 게이트 헤드로 결합한다. 결합 가중을 사람이 정하지 않는다. 결합 헤드는 각 폴드 컷오프 이전 데이터로만 학습한다.
 
 [학습 설계]
 - 손실(궤적 MSE 등), 공식 창 이전 chronological 검증 분할(공식 창 정답으로 고르지 않음), seed 0/1/2, 옵티마이저·주요 하이퍼파라미터.
-- DL은 GPU, seed당 ≥ 30분 또는 early stop 수렴, epoch별 valid loss를 `curves_s{seed}.json`에 저장. 3-seed가 워커 12시간 안에 끝나는 규모.
+- DL은 GPU, seed당 ≥ 30분 또는 early stop 수렴, 사전학습·미세조정 epoch별 valid loss를 `curves_s{seed}.json`에 저장. roll3 3폴드×3시드가 워커 24시간 안에 끝나는 규모.
 
 [귀납 편향 근거]
 - 이 구조가 확정 챔피언의 오차 질량(고속 셀 4개·shock 창의 도착 시각, 72h level)을 per-lead XGBoost보다 잘 잡는 이유.
@@ -207,18 +213,19 @@ ARCH·ARCH-STEP 행은 같은 줄 끝에 `lineage=<계보> stage=<N> d_prev=<직
 - 모든 입력의 관측·발행 시각과 지연 규칙(ACE +2h 등), 학습 target < 2026-05-29, 라벨 성숙, poison check.
 
 [실험]
-- 리더보드 전체 구간 3-seed 단독 run → predictions_official_s{seed}.parquet → expos lb-eval. 비교: 확정 챔피언 lb-eval(SKILL 1단계에서 확정한 값)과 계보 직전 단계.
+- roll3 3폴드×3시드: 단독 예측(계보 기록용)과 챔피언 고정 결합 예측을 모두 만든다. 결합 run을 `expos roll3-eval <E> --control <챔피언 roll3 control>`과 `expos arrival-eval`로 판정한다. 단독 예측의 풀링 MSE는 `standalone=`로 적는다.
+- roll3와 도착 선검정을 통과한 결합 run만 공식 창 3-seed → `expos lb-eval`로 1회 확인한다.
 - 구현 고장은 끝까지 고쳐 완수한다.
 
 [계보 종료·승격 규칙]
 - 종료: 연속 단계에서 성능 개선도 없고, 사전 정의한 핵심 가설/정보 검정에서도 새 정보를 얻지 못해 더 진행할 연구 근거가 없을 때. 최대 6단계. `3%를 못 넘었다`는 이유만으로 초기 계보를 종료하지 않는다.
-- 승격 대기: 확정 챔피언 대비 평균 −1.5% 이상 + 3 seed 모두 낮음 → REPLICATE.
+- 승격 대기: 결합 run이 roll3 통과 + 공식 창 lb-eval이 챔피언보다 낮음 → REPLICATE.
 
-[결과 기록] 첫 줄 `LB| ... type=arch lineage=<계보> stage=<N> d_prev=<값,%>`.
+[결과 기록] 맨 위 `R3| ... type=arch lineage=<계보> stage=<N> d_prev=<값,%> standalone=<값>`, 다음 `ARR| ...`, 공식 창을 돌렸으면 `LB| ...`.
 
 [중복 검사] evidence.md "과거 아키텍처 계보"(N1–N5)와 시트에서 같은 구조 계열을 쓴 이전 run(E id, lb-eval 값)을 모두 적고, 그 시도와 구조·학습 대상·입력 표현 중 무엇이 다른지 쓴다. 학습 규모만 다르면 새 계보가 아니다.
 ```
 
 ## 쓰면 안 되는 문구
-C/A·O/A 비율 임계, "MSE<2000", late 감소율 임계, "smoke로 판정", "7일 CAL 블록으로 결정", "캠페인 종료 후 진행", "critic PASS 후 실행", 제출·업로드 지시.
+C/A·O/A 비율 임계, "MSE<2000", late 감소율 임계, "smoke로 판정", "7일 CAL 블록으로 결정", "공식 창 점수로 고른다", "캠페인 종료 후 진행", "critic PASS 후 실행", 제출·업로드 지시.
 손으로 정한 휴리스틱 지정과 그 값 변경: 고정 lag("26/27/28일"), rolling 창 길이, 임계값 기반 영역 추출, strip·sector·bin 개수, 시뮬레이션 출력의 k개 스칼라 요약, 리드·구간 경계, 수동 멤버 선택·고정 가중, analog K·lookback·거리, origin grid 간격(`references/heuristics.md`).

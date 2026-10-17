@@ -5,7 +5,8 @@
 ## 0. 데이터 만들기
 `태양풍 연구` 탭 전체를 표로 읽고, 리더보드 3-seed lb-eval이 있는 행만 남긴다. 행마다 다음을 뽑는다.
 - `E`, `base`(그 행의 기준 레시피 E id), `mse_seed[k]`(seed별), `mean`, `cells`(llh/lhh/hlh/hhh), `type`(아래 6유형), `queue_id`.
-- 우선 결과 칸 첫 줄의 `LB| E=... base=... seeds=... mse=a/b/c mean=... d_base=... cells=... type=...`를 파싱한다. 재현 결과는 `REP| target=... base=... d=... mean_d=... t=... verdict=...`를 파싱한다.
+- v7 이후 행은 결과 칸의 `R3| E=... base=... d_pool=... ci=[lo,hi] folds_better=k/3 ... pass=Y|n` 줄을 먼저 파싱한다. H1·H2·H5는 R3 행끼리, LB 행끼리 따로 계산하고 섞지 않는다. R3 행의 σ는 d_pool의 표준편차이고, 각 행의 CI가 이미 블록 부트스트랩이므로 H1은 "CI 상한 < 0인 행 수 ÷ 전체"도 함께 적는다.
+- 그다음 `LB| E=... base=... seeds=... mse=a/b/c mean=... d_base=... cells=... type=...`를 파싱한다. 재현 결과는 `REP| target=... base=... d=... mean_d=... t=... verdict=...`를 파싱한다.
 - 이 줄이 없으면 자유 텍스트에서 seed MSE 세 개와 기준 E id를 뽑는다. 뽑지 못하면 그 행은 제외하고, 제외 수를 표에 적는다.
 - base의 seed별 MSE는 base 행에서 가져온다(historical 예: E1022 seed 0/1/2 = 3409.80/3420.45/3435.17). 특정 base 값을 하드코딩하지 않는다.
 
@@ -85,7 +86,7 @@ H1–H8은 후보 탐색 방향을 바꾸는 신호다. 어떤 H 신호도 A-GAT
 - 단순히 `3%를 못 넘었다`는 이유만으로 초기 exploration 계보를 종료하지 않는다. 종료된 계보는 "닫힌 축(계보 단위)"으로 evidence에 기록한다.
 - **승격 대기**: 계보 run이 확정 챔피언 대비 평균 −1.5% 이상이고 3 seed 모두 낮음. REPLICATE 행(base = 확정 챔피언)을 낸다.
 - **챔피언**: REPLICATE가 확정되면 그 계보 run이 새 확정 챔피언이다. 이후 INCREMENT의 [기준 레시피]도 그 계보 코드가 된다(E0472 계열이 아니게 된다).
-- 단독 판정만 한다. E0472 계열의 예측·잔차를 입력으로 쓰거나 E0472 계열과 블렌딩한 run은 계보 결과로 세지 않는다.
+- 판정은 챔피언 고정이다(v7): 계보 run의 결과는 챔피언 궤적 위 학습형 잔차·게이트 결합 run의 `R3|`로 센다. 단독 점수(`standalone=`)는 계보 진행 판단에만 쓴다.
 
 ## 출력 예시
 | 신호 | 수치 | 판정 | 큐 조치 |
